@@ -1,0 +1,52 @@
+{
+  "site": {
+    "title": "Biełaruskaja MUZyka",
+    "tagline": "Biełaruskaja muzyka, jakuju možna spampavać lehalna"
+  },
+  "nav": {
+    "artists": "Vykanaŭcy",
+    "searchPlaceholder": "Vykanaŭca abo albom",
+    "search": "Šukać"
+  },
+  "common": {
+    "loading": "Zahruzka…",
+    "error": "Nie atrymałasia zahruzić dadzienyja.",
+    "notFound": "Takoj staronki niama."
+  },
+  "artists": {
+    "page": "Staronka {{page}} z {{pages}}",
+    "prev": "← Papiaredniaja",
+    "next": "Nastupnaja →"
+  },
+  "artist": {
+    "aliases": "Inšyja nazvy: {{names}}",
+    "albums": "Albomy",
+    "otherTracks": "Treki na inšych albomach"
+  },
+  "album": {
+    "where": "Dzie ŭziać",
+    "tracks": "Treki",
+    "noTracks": "Śpisu trekaŭ pakul niama."
+  },
+  "price": {
+    "FREE": "Biaspłatna",
+    "NAME_YOUR_PRICE": "Zapłaci, kolki chočaš",
+    "PAID": "Kupić"
+  },
+  "nameYourPrice": "Spampavać možna biaspłatna — abo zapłacić vykanaŭcu, kolki chočaš.",
+  "search": {
+    "heading": "Pošuk: «{{q}}»",
+    "nothing": "Ničoha nie znajšłosia."
+  },
+  "about": {
+    "link": "Pra sajt i kantakt",
+    "heading": "Pra sajt",
+    "what": "Kataloh biełaruskaj muzyki, jakuju možna spampavać lehalna. Sajt nie zachoŭvaje muzyku: jon tolki spasyłajecca na staronki, jakija vybrali sami vykanaŭcy abo ichnyja lejbły.",
+    "contactHeading": "Kantakt",
+    "contact": "Kali spasyłka nie pracuje, viadzie nie tudy abo parušaje čyje-niebudź pravy, napišycie na {{email}} — jaje vypraviać abo vydalać.",
+    "privacyHeading": "Pryvatnaść",
+    "privacy1": "Sajt nie stavić kuki i nie viadzie žurnału naviedvańniaŭ.",
+    "privacy2": "Kab dastavić staronku, servery Amazon Web Services (AWS) apracoŭvajuć vaš IP-adras. Padstava — zakonny intares u tym, kab sajt pracavaŭ (art. 6 č. 1 p. f GDPR). Sajt pracuje ŭ rehijonie AWS u Stakholmie, Švecyja; kali AWS pieradaje źviestki pa-za Eŭrapiejski Źviaz, to tolki pavodle typavych dahavornych umovaŭ EZ. Sam sajt hetych źviestak nie zachoŭvaje.",
+    "privacy3": "Adkazny za źviestki: Heorhi Puhachou, {{email}}. Vy majecie prava na dostup da svaich źviestak, na ich vypraŭleńnie i vydaleńnie, na abmiežavańnie apracoŭki i piarečańnie suprać jaje, a taksama prava padać skarhu ŭ nahladny orhan — Prezes Urzędu Ochrony Danych Osobowych (UODO) u Polščy."
+  }
+}

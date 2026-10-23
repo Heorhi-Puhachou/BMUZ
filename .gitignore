@@ -12,6 +12,9 @@ dist/
 # AWS CDK
 cdk.out/
 
+# Python
+__pycache__/
+
 # Secrets and local settings
 .env
 .env.*

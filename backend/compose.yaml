@@ -2,8 +2,8 @@ services:
   postgres:
     image: 'postgres:18'
     environment:
-      - 'POSTGRES_DB=bmz'
-      - 'POSTGRES_USER=bmz'
-      - 'POSTGRES_PASSWORD=bmz-local'
+      - 'POSTGRES_DB=bmuz'
+      - 'POSTGRES_USER=bmuz'
+      - 'POSTGRES_PASSWORD=bmuz-local'
     ports:
       - '5432'

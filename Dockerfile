@@ -18,10 +18,10 @@ COPY --from=frontend /build/dist src/main/resources/static
 RUN ./mvnw -q -B package -DskipTests
 
 FROM eclipse-temurin:21-jre
-RUN useradd --system --uid 1001 bmz
+RUN useradd --system --uid 1001 bmuz
 WORKDIR /app
 COPY --from=backend /build/target/*.jar app.jar
 COPY data/catalogue.json data/catalogue.json
-USER bmz
+USER bmuz
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

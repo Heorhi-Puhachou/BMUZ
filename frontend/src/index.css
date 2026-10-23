@@ -52,6 +52,34 @@ a {
   margin-bottom: 1.5rem;
 }
 
+.spellings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.spellings button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.spellings button:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.spellings button[aria-pressed='true'] {
+  color: var(--fg);
+  font-weight: 600;
+  cursor: default;
+}
+
 .site-title {
   font-size: 1.5rem;
   font-weight: 700;

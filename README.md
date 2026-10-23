@@ -1,4 +1,4 @@
-# BMZ — Беларуская МуЗыка
+# BMUZ — Беларуская МУЗыка
 
 Каталёг беларускай музыкі, якую можна спампаваць легальна: выканаўцы, іхныя
 альбомы й трэкі, і месцы, дзе кожны альбом можна купіць або спампаваць
@@ -15,7 +15,7 @@
 
 Распрацоўваецца. Гатова: каталёг з супольнымі альбомамі, імпарт з `BY.txt`,
 імпарт і экспарт JSON, API для чытаньня, старонкі выканаўцаў і альбомаў,
-пошук.
+пошук, тры правапісы — тарашкевіца, афіцыйны і łacinka.
 
 ## Склад
 
@@ -24,6 +24,7 @@
 | `backend/`  | Java 21, Spring Boot, PostgreSQL            |
 | `frontend/` | React, TypeScript, Vite                     |
 | `data/`     | каталёг у JSON — пачатковыя дадзеныя        |
+| `infra/`    | як сайт працуе на AWS                       |
 
 ## Патрабаваньні
 
@@ -54,15 +55,29 @@ npm run dev             # http://localhost:5173
 Імпарт каталёгу ў пустую базу:
 
 ```bash
-./mvnw spring-boot:run -Dspring-boot.run.arguments="--bmz.import.json=../data/catalogue.json"
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--bmuz.import.json=../data/catalogue.json"
 ```
+
+## Правапісы
+
+Тэксты старонак пішуцца толькі ў `frontend/src/messages/be-tarask.json`.
+Афіцыйны правапіс і łacinka робяцца з іх праграмай
+[orthography-converter](https://github.com/Heorhi-Puhachou/orthography-converter),
+сабранай побач з гэтым рэпазыторыем:
+
+```bash
+cd frontend
+npm run messages
+```
+
+Словы, якія праграма канвэртуе няправільна, выпраўляюцца ў `overrides.json`.
 
 ## Вобраз Docker
 
 Бэкэнд і старонкі разам, як на сэрвэры:
 
 ```bash
-docker build -t bmz .
+docker build -t bmuz .
 ```
 
 ## Ліцэнзія
