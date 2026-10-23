@@ -27,13 +27,14 @@ public class CatalogueController {
 
     @GetMapping("/artists")
     public PageView<ArtistTile> artists(@RequestParam(defaultValue = "0") @Min(0) int page,
-                                           @RequestParam(defaultValue = "50") @Min(1) @Max(200) int size) {
-        return catalogue.listArtists(page, size);
+                                           @RequestParam(defaultValue = "50") @Min(1) @Max(200) int size,
+                                           @RequestParam(defaultValue = "false") boolean free) {
+        return catalogue.listArtists(page, size, free);
     }
 
     @GetMapping("/artists/{id}")
-    public ArtistView artist(@PathVariable long id) {
-        return catalogue.artist(id);
+    public ArtistView artist(@PathVariable long id, @RequestParam(defaultValue = "false") boolean free) {
+        return catalogue.artist(id, free);
     }
 
     @GetMapping("/albums/{id}")
@@ -42,7 +43,8 @@ public class CatalogueController {
     }
 
     @GetMapping("/search")
-    public SearchResult search(@RequestParam("q") String query) {
-        return catalogue.search(query);
+    public SearchResult search(@RequestParam("q") String query,
+                               @RequestParam(defaultValue = "false") boolean free) {
+        return catalogue.search(query, free);
     }
 }

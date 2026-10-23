@@ -63,7 +63,7 @@ class PageController {
     ResponseEntity<String> artist(@PathVariable long id) {
         ArtistView artist;
         try {
-            artist = catalogue.artist(id);
+            artist = catalogue.artist(id, false);
         } catch (ResponseStatusException e) {
             return page(HttpStatus.NOT_FOUND, SITE, SITE_DESCRIPTION);
         }

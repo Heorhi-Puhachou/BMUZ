@@ -47,11 +47,14 @@ public class CatalogueService {
         this.jdbc = jdbc;
     }
 
-    public PageView<ArtistTile> listArtists(int page, int size) {
-        Page<Artist> result = artists.findAll(PageRequest.of(page, size, Sort.by("name")));
+    public PageView<ArtistTile> listArtists(int page, int size, boolean freeOnly) {
+        PageRequest request = PageRequest.of(page, size, Sort.by("name"));
+        Page<Artist> result = freeOnly
+                ? artists.findWithFreeAlbum(true, FreeFilter.FREE_TYPES, request)
+                : artists.findAll(request);
         List<Long> ids = result.getContent().stream().map(Artist::getId).toList();
         Map<Long, Album> newest = new HashMap<>();
-        for (Object[] row : albums.findNewestFirstByArtists(ids)) {
+        for (Object[] row : albums.findNewestFirstByArtists(ids, freeOnly, FreeFilter.FREE_TYPES)) {
             newest.putIfAbsent((Long) row[0], (Album) row[1]);
         }
         List<ArtistTile> tiles = result.getContent().stream()
@@ -60,11 +63,11 @@ public class CatalogueService {
         return new PageView<>(tiles, page, size, result.getTotalElements());
     }
 
-    public ArtistView artist(long id) {
+    public ArtistView artist(long id, boolean freeOnly) {
         Artist artist = artists.findById(id).orElseThrow(() -> notFound("artist", id));
-        List<Album> own = albums.findByArtist(id);
+        List<Album> own = albums.findByArtist(id, freeOnly, FreeFilter.FREE_TYPES);
         Set<Long> ownIds = own.stream().map(Album::getId).collect(Collectors.toSet());
-        List<TrackHit> otherTracks = tracks.findCreditedToArtist(id).stream()
+        List<TrackHit> otherTracks = tracks.findCreditedToArtist(id, freeOnly, FreeFilter.FREE_TYPES).stream()
                 .filter(t -> !ownIds.contains(t.getAlbum().getId()))
                 .map(t -> new TrackHit(t.getId(), t.getNumber(), t.getTitle(), credit(t.getCredits()),
                         summary(t.getAlbum())))
@@ -86,7 +89,7 @@ public class CatalogueService {
                 album.getLinks().stream().map(CatalogueService::view).toList());
     }
 
-    public SearchResult search(String query) {
+    public SearchResult search(String query, boolean freeOnly) {
         String q = query.strip();
         if (q.isEmpty()) {
             return new SearchResult(List.of(), List.of());
@@ -95,28 +98,36 @@ public class CatalogueService {
                         SELECT a.id, a.name
                         FROM artist a
                         LEFT JOIN artist_alias al ON al.artist_id = a.id
-                        WHERE a.name ILIKE '%' || :q || '%'
+                        WHERE (a.name ILIKE '%' || :q || '%'
                            OR al.name ILIKE '%' || :q || '%'
                            OR :q <% a.name
-                           OR :q <% al.name
+                           OR :q <% al.name)
+                          AND (:freeOnly = false OR EXISTS (
+                              SELECT 1 FROM album_credit ac WHERE ac.artist_id = a.id AND
+                        """ + FreeFilter.sql("ac.album_id") + """
+                          ))
                         GROUP BY a.id, a.name
                         ORDER BY max(greatest(word_similarity(:q, a.name),
                                               coalesce(word_similarity(:q, al.name), 0))) DESC, a.name
                         LIMIT :limit
                         """)
                 .param("q", q)
+                .param("freeOnly", freeOnly)
                 .param("limit", SEARCH_LIMIT)
                 .query((rs, n) -> new ArtistSummary(rs.getLong("id"), rs.getString("name")))
                 .list();
         List<Long> albumIds = jdbc.sql("""
                         SELECT id
                         FROM album
-                        WHERE title ILIKE '%' || :q || '%'
-                           OR :q <% title
+                        WHERE (title ILIKE '%' || :q || '%'
+                           OR :q <% title)
+                          AND
+                        """ + FreeFilter.sql("album.id") + """
                         ORDER BY word_similarity(:q, title) DESC, title
                         LIMIT :limit
                         """)
                 .param("q", q)
+                .param("freeOnly", freeOnly)
                 .param("limit", SEARCH_LIMIT)
                 .query(Long.class)
                 .list();

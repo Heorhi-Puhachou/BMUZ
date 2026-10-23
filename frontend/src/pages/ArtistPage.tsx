@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router'
 import { type AlbumSummary, type Artist, useApi } from '../api'
 import Cover from '../Cover'
 import Credit from '../Credit'
+import { useFreeOnly, withFree } from '../freeOnly'
 import Status from '../Status'
 import { useTitle } from '../useTitle'
 
@@ -14,7 +15,8 @@ function others(album: AlbumSummary) {
 export default function ArtistPage() {
   const { t } = useTranslation()
   const { id } = useParams()
-  const loaded = useApi<Artist>(`/api/artists/${id}`)
+  const { freeOnly } = useFreeOnly()
+  const loaded = useApi<Artist>(withFree(`/api/artists/${id}`, freeOnly))
   useTitle(loaded.state === 'ok' ? loaded.data.name : undefined)
 
   if (loaded.state !== 'ok') {

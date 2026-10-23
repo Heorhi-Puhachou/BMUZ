@@ -19,7 +19,7 @@ cat > /opt/bmuz/env.conf <<'EOF'
 REGION=eu-north-1
 REGISTRY=899012776854.dkr.ecr.eu-north-1.amazonaws.com
 IMAGE=899012776854.dkr.ecr.eu-north-1.amazonaws.com/bmuz:0efb5df
-DB_HOST=__DB_HOST__
+DB_HOST=bmuz.cbas4a8c0z88.eu-north-1.rds.amazonaws.com
 SECRET_ID=arn:aws:secretsmanager:eu-north-1:899012776854:secret:rds!db-66425024-feee-4745-8212-0b5e6b279532-5dUx1W
 EOF
 

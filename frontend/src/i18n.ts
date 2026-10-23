@@ -7,9 +7,9 @@ import beTarask from './messages/be-tarask.json'
 // Тарашкевіца — асноўны правапіс; астатнія два робіць з яе `npm run messages`.
 // Назва кожнага варыянта напісаная ім самім, таму яе не перакладаюць.
 export const SPELLINGS = [
-  { tag: 'be-tarask', label: 'Тарашкевіца' },
-  { tag: 'be', label: 'Афіцыйны правапіс' },
-  { tag: 'be-Latn', label: 'Łacinka' },
+  { tag: 'be-tarask', label: 'ТАР', name: 'Тарашкевіца' },
+  { tag: 'be', label: 'АФІ', name: 'Афіцыйны правапіс' },
+  { tag: 'be-Latn', label: 'ŁAC', name: 'Łacinka' },
 ] as const
 
 const STORAGE_KEY = 'bmuz.spelling'

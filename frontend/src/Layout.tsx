@@ -1,10 +1,12 @@
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useNavigate, useSearchParams } from 'react-router'
+import { useFreeOnly } from './freeOnly'
 import { SPELLINGS } from './i18n'
 
 export default function Layout() {
   const { t, i18n } = useTranslation()
+  const { freeOnly, setFreeOnly } = useFreeOnly()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [query, setQuery] = useState(params.get('q') ?? '')
@@ -21,19 +23,27 @@ export default function Layout() {
     <>
       <header className="site-header">
         <div className="wrap">
-          <nav className="spellings" aria-label="Правапіс · Pravapis">
-            {SPELLINGS.map((s) => (
-              <button
-                key={s.tag}
-                type="button"
-                lang={s.tag}
-                aria-pressed={i18n.language === s.tag}
-                onClick={() => i18n.changeLanguage(s.tag)}
-              >
-                {s.label}
-              </button>
-            ))}
-          </nav>
+          <div className="topbar">
+            <nav className="spellings" aria-label="Правапіс · Pravapis">
+              {SPELLINGS.map((s) => (
+                <button
+                  key={s.tag}
+                  type="button"
+                  lang={s.tag}
+                  title={s.name}
+                  aria-label={s.name}
+                  aria-pressed={i18n.language === s.tag}
+                  onClick={() => i18n.changeLanguage(s.tag)}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </nav>
+            <label className="free-only">
+              <input type="checkbox" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} />
+              {t('filter.freeOnly')}
+            </label>
+          </div>
           <Link to="/" className="site-title">{t('site.title')}</Link>
           <p className="tagline">{t('site.tagline')}</p>
           <form className="search" role="search" onSubmit={search}>

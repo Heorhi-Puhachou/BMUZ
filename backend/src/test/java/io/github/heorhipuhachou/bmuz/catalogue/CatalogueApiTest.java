@@ -114,6 +114,44 @@ class CatalogueApiTest {
     }
 
     @Test
+    void listsOnlyArtistsWithAFreeAlbumWhenAsked() throws Exception {
+        mvc.perform(get("/api/artists").param("free", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(8))
+                .andExpect(jsonPath("$.items[*].name").value(contains(
+                        "[Für]", "7 ocean", "Вольны аркестр", "Вольны Хор", "Зміцер Вайцюшкевіч",
+                        "Фантастычныя плыўцы", "Graifit", "Lavon Volski")));
+    }
+
+    @Test
+    void showsOnlyTheFreeAlbumsOfAnArtistWhenAsked() throws Exception {
+        mvc.perform(get("/api/artists/{id}", id("artist", "name", "Lavon Volski")).param("free", "true"))
+                .andExpect(jsonPath("$.albums[*].title").value(contains("Four")));
+        mvc.perform(get("/api/artists/{id}", id("artist", "name", "7 ocean")).param("free", "true"))
+                .andExpect(jsonPath("$.albums[*].title").value(contains("Homunculus 2")));
+    }
+
+    @Test
+    void countsAFreeTrackAsAFreeAlbum() throws Exception {
+        mvc.perform(get("/api/artists/{id}", id("artist", "name", "nastka")).param("free", "true"))
+                .andExpect(jsonPath("$.otherTracks.length()").value(1));
+    }
+
+    @Test
+    void searchesOnlyFreeAlbumsWhenAsked() throws Exception {
+        mvc.perform(get("/api/search").param("q", "Homunculs").param("free", "true"))
+                .andExpect(jsonPath("$.albums[*].title").value(contains("Homunculus 2")));
+        mvc.perform(get("/api/search").param("q", "J:Mors").param("free", "true"))
+                .andExpect(jsonPath("$.artists.length()").value(0));
+    }
+
+    @Test
+    void keepsPaidLinksOnTheAlbumPage() throws Exception {
+        mvc.perform(get("/api/albums/{id}", id("album", "title", "Дуплет")))
+                .andExpect(jsonPath("$.links[*].priceType").value(contains("FREE", "PAID")));
+    }
+
+    @Test
     void answersNotFoundForAMissingAlbum() throws Exception {
         mvc.perform(get("/api/albums/{id}", 999_999)).andExpect(status().isNotFound());
     }

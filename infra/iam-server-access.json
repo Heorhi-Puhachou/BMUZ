@@ -13,12 +13,12 @@
                 "ecr:GetDownloadUrlForLayer",
                 "ecr:BatchCheckLayerAvailability"
             ],
-            "Resource": "arn:aws:ecr:eu-north-1:899012776854:repository/bmz"
+            "Resource": "arn:aws:ecr:eu-north-1:899012776854:repository/bmuz"
         },
         {
             "Effect": "Allow",
             "Action": "secretsmanager:GetSecretValue",
-            "Resource": "arn:aws:secretsmanager:eu-north-1:899012776854:secret:rds!db-05036461-bccc-443f-be0e-add12aaf16cc-RKSCCe"
+            "Resource": "arn:aws:secretsmanager:eu-north-1:899012776854:secret:rds!db-66425024-feee-4745-8212-0b5e6b279532-5dUx1W"
         }
     ]
 }

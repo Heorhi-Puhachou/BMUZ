@@ -52,12 +52,32 @@ a {
   margin-bottom: 1.5rem;
 }
 
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
 .spellings {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem 1rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+}
+
+.free-only {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.free-only input {
+  accent-color: var(--accent);
+  margin: 0;
 }
 
 .spellings button {
@@ -75,7 +95,7 @@ a {
 }
 
 .spellings button[aria-pressed='true'] {
-  color: var(--fg);
+  color: var(--accent);
   font-weight: 600;
   cursor: default;
 }

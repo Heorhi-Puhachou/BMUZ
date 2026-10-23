@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router'
 import { type SearchResult, useApi } from '../api'
 import Credit from '../Credit'
+import { useFreeOnly, withFree } from '../freeOnly'
 import Status from '../Status'
 import { useTitle } from '../useTitle'
 
@@ -9,7 +10,8 @@ export default function SearchPage() {
   const { t } = useTranslation()
   const [params] = useSearchParams()
   const q = params.get('q') ?? ''
-  const loaded = useApi<SearchResult>(`/api/search?q=${encodeURIComponent(q)}`)
+  const { freeOnly } = useFreeOnly()
+  const loaded = useApi<SearchResult>(withFree(`/api/search?q=${encodeURIComponent(q)}`, freeOnly))
   useTitle(t('search.heading', { q }))
 
   if (loaded.state !== 'ok') {

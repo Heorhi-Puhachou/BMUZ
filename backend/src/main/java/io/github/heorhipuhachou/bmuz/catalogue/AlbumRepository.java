@@ -10,18 +10,13 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
 
     List<Album> findByYearAndTitle(int year, String title);
 
-    @Query("""
-            SELECT a FROM Album a JOIN a.credits c
-            WHERE c.artist.id = :artistId
-            ORDER BY a.year, a.title
-            """)
-    List<Album> findByArtist(long artistId);
+    @Query("SELECT a FROM Album a JOIN a.credits c WHERE c.artist.id = :artistId AND " + FreeFilter.ALBUM_A
+            + " ORDER BY a.year, a.title")
+    List<Album> findByArtist(long artistId, boolean freeOnly, Collection<PriceType> freeTypes);
 
     /** Для кожнага выканаўцы — ягоныя альбомы ад найноўшага; першы радок па выканаўцы і ёсьць найноўшы. */
-    @Query("""
-            SELECT c.artist.id, a FROM Album a JOIN a.credits c
-            WHERE c.artist.id IN :artistIds
-            ORDER BY a.year DESC, a.id DESC
-            """)
-    List<Object[]> findNewestFirstByArtists(Collection<Long> artistIds);
+    @Query("SELECT c.artist.id, a FROM Album a JOIN a.credits c WHERE c.artist.id IN :artistIds AND "
+            + FreeFilter.ALBUM_A + " ORDER BY a.year DESC, a.id DESC")
+    List<Object[]> findNewestFirstByArtists(Collection<Long> artistIds, boolean freeOnly,
+                                            Collection<PriceType> freeTypes);
 }

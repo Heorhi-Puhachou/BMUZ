@@ -1,15 +1,19 @@
 {
     "CallerReference": "bmz-2026-10-23",
     "Aliases": {
-        "Quantity": 0
+        "Quantity": 2,
+        "Items": [
+            "www.bmuz.eu",
+            "bmuz.eu"
+        ]
     },
     "DefaultRootObject": "",
     "Origins": {
         "Quantity": 1,
         "Items": [
             {
-                "Id": "bmz-server",
-                "DomainName": "ec2-16-16-28-191.eu-north-1.compute.amazonaws.com",
+                "Id": "bmuz-server",
+                "DomainName": "ec2-51-20-69-88.eu-north-1.compute.amazonaws.com",
                 "OriginPath": "",
                 "CustomHeaders": {
                     "Quantity": 0
@@ -40,7 +44,7 @@
         "Quantity": 0
     },
     "DefaultCacheBehavior": {
-        "TargetOriginId": "bmz-server",
+        "TargetOriginId": "bmuz-server",
         "TrustedSigners": {
             "Enabled": false,
             "Quantity": 0
@@ -70,7 +74,13 @@
             "Quantity": 0
         },
         "FunctionAssociations": {
-            "Quantity": 0
+            "Quantity": 1,
+            "Items": [
+                {
+                    "FunctionARN": "arn:aws:cloudfront::899012776854:function/bmuz-www-redirect",
+                    "EventType": "viewer-request"
+                }
+            ]
         },
         "FieldLevelEncryptionId": "",
         "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
@@ -84,7 +94,7 @@
         "Items": [
             {
                 "PathPattern": "/assets/*",
-                "TargetOriginId": "bmz-server",
+                "TargetOriginId": "bmuz-server",
                 "TrustedSigners": {
                     "Enabled": false,
                     "Quantity": 0
@@ -114,7 +124,13 @@
                     "Quantity": 0
                 },
                 "FunctionAssociations": {
-                    "Quantity": 0
+                    "Quantity": 1,
+                    "Items": [
+                        {
+                            "FunctionARN": "arn:aws:cloudfront::899012776854:function/bmuz-www-redirect",
+                            "EventType": "viewer-request"
+                        }
+                    ]
                 },
                 "FieldLevelEncryptionId": "",
                 "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
@@ -127,7 +143,7 @@
     "CustomErrorResponses": {
         "Quantity": 0
     },
-    "Comment": "BMZ",
+    "Comment": "BMUZ",
     "Logging": {
         "Enabled": false,
         "IncludeCookies": false,
@@ -137,10 +153,12 @@
     "PriceClass": "PriceClass_100",
     "Enabled": true,
     "ViewerCertificate": {
-        "CloudFrontDefaultCertificate": true,
-        "SSLSupportMethod": "vip",
-        "MinimumProtocolVersion": "TLSv1",
-        "CertificateSource": "cloudfront"
+        "CloudFrontDefaultCertificate": false,
+        "ACMCertificateArn": "arn:aws:acm:us-east-1:899012776854:certificate/e947167f-96de-47fd-9bdf-2e74bf93de4e",
+        "SSLSupportMethod": "sni-only",
+        "MinimumProtocolVersion": "TLSv1.2_2021",
+        "Certificate": "arn:aws:acm:us-east-1:899012776854:certificate/e947167f-96de-47fd-9bdf-2e74bf93de4e",
+        "CertificateSource": "acm"
     },
     "Restrictions": {
         "GeoRestriction": {
