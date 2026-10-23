@@ -1,0 +1,18 @@
+# IDE
+.idea/
+*.iml
+
+# Java
+target/
+
+# React
+node_modules/
+dist/
+
+# AWS CDK
+cdk.out/
+
+# Secrets and local settings
+.env
+.env.*
+*.pem
