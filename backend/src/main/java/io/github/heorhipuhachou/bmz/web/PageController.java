@@ -54,6 +54,11 @@ class PageController {
         return page(HttpStatus.OK, SITE, SITE_DESCRIPTION);
     }
 
+    @GetMapping(value = "/about", produces = MediaType.TEXT_HTML_VALUE)
+    ResponseEntity<String> about() {
+        return page(HttpStatus.OK, "Пра сайт — " + SITE, SITE_DESCRIPTION);
+    }
+
     @GetMapping(value = "/artists/{id}", produces = MediaType.TEXT_HTML_VALUE)
     ResponseEntity<String> artist(@PathVariable long id) {
         ArtistView artist;

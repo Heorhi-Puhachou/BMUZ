@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router'
 import './i18n'
 import './index.css'
 import Layout from './Layout'
+import AboutPage from './pages/AboutPage'
 import AlbumPage from './pages/AlbumPage'
 import ArtistList from './pages/ArtistList'
 import ArtistPage from './pages/ArtistPage'
@@ -19,6 +20,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="artists/:id" element={<ArtistPage />} />
           <Route path="albums/:id" element={<AlbumPage />} />
           <Route path="search" element={<SearchPage />} />
+          <Route path="about" element={<AboutPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

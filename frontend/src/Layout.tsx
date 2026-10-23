@@ -37,6 +37,11 @@ export default function Layout() {
       <main className="wrap">
         <Outlet />
       </main>
+      <footer className="site-footer">
+        <div className="wrap">
+          <Link to="/about">{t('about.link')}</Link>
+        </div>
+      </footer>
     </>
   )
 }
