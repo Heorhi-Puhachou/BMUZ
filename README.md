@@ -13,15 +13,27 @@
 
 ## Стан
 
-Распрацоўваецца. Гатова: база каталёгу, імпарт з `BY.txt`, імпарт і экспарт
-JSON, API для чытаньня.
+Распрацоўваецца. Гатова: каталёг з супольнымі альбомамі, імпарт з `BY.txt`,
+імпарт і экспарт JSON, API для чытаньня, старонкі выканаўцаў і альбомаў,
+пошук.
+
+## Склад
+
+| Тэчка       | Што                                         |
+| ----------- | ------------------------------------------- |
+| `backend/`  | Java 21, Spring Boot, PostgreSQL            |
+| `frontend/` | React, TypeScript, Vite                     |
+| `data/`     | каталёг у JSON — пачатковыя дадзеныя        |
 
 ## Патрабаваньні
 
 - Java 21
+- Node.js 22
 - Docker — для PostgreSQL падчас распрацоўкі і тэстаў
 
-## Запуск
+## Запуск для распрацоўкі
+
+У адным тэрмінале — бэкэнд:
 
 ```bash
 cd backend
@@ -31,10 +43,26 @@ cd backend
 
 Пры запуску Spring Boot сам падымае PostgreSQL у Docker з `compose.yaml`.
 
-Імпарт з `BY.txt` і экспарт у JSON за адзін запуск:
+У другім — старонкі:
 
 ```bash
-./mvnw spring-boot:run -Dspring-boot.run.arguments="--bmz.import.by-txt=BY.txt --bmz.export.json=catalogue.json"
+cd frontend
+npm install
+npm run dev             # http://localhost:5173
+```
+
+Імпарт каталёгу ў пустую базу:
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--bmz.import.json=../data/catalogue.json"
+```
+
+## Вобраз Docker
+
+Бэкэнд і старонкі разам, як на сэрвэры:
+
+```bash
+docker build -t bmz .
 ```
 
 ## Ліцэнзія
