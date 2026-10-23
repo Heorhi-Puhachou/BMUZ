@@ -1,15 +1,16 @@
 package io.github.heorhipuhachou.bmz.catalogue;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
+import jakarta.persistence.OrderColumn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,13 +22,14 @@ public class Album {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "artist_id")
-    private Artist artist;
-
     private int year;
 
     private String title;
+
+    @ElementCollection
+    @CollectionTable(name = "album_credit", joinColumns = @JoinColumn(name = "album_id"))
+    @OrderColumn(name = "position")
+    private List<Credit> credits = new ArrayList<>();
 
     @OneToMany(mappedBy = "album", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("number")
@@ -40,14 +42,17 @@ public class Album {
     protected Album() {
     }
 
-    Album(Artist artist, int year, String title) {
-        this.artist = artist;
+    public Album(int year, String title, List<Credit> credits) {
+        if (credits.isEmpty()) {
+            throw new IllegalArgumentException("an album needs at least one artist: " + title);
+        }
         this.year = year;
         this.title = title;
+        this.credits.addAll(credits);
     }
 
-    public Track addTrack(int number, String title, Integer lengthSeconds) {
-        Track track = new Track(this, number, title, lengthSeconds);
+    public Track addTrack(int number, String title, Integer lengthSeconds, List<Credit> credits) {
+        Track track = new Track(this, number, title, lengthSeconds, credits);
         tracks.add(track);
         return track;
     }
@@ -62,16 +67,16 @@ public class Album {
         return id;
     }
 
-    public Artist getArtist() {
-        return artist;
-    }
-
     public int getYear() {
         return year;
     }
 
     public String getTitle() {
         return title;
+    }
+
+    public List<Credit> getCredits() {
+        return credits;
     }
 
     public List<Track> getTracks() {

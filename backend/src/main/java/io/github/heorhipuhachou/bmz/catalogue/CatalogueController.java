@@ -1,7 +1,7 @@
 package io.github.heorhipuhachou.bmz.catalogue;
 
 import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.AlbumView;
-import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.ArtistSummary;
+import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.ArtistTile;
 import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.ArtistView;
 import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.PageView;
 import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.SearchResult;
@@ -26,7 +26,7 @@ public class CatalogueController {
     }
 
     @GetMapping("/artists")
-    public PageView<ArtistSummary> artists(@RequestParam(defaultValue = "0") @Min(0) int page,
+    public PageView<ArtistTile> artists(@RequestParam(defaultValue = "0") @Min(0) int page,
                                            @RequestParam(defaultValue = "50") @Min(1) @Max(200) int size) {
         return catalogue.listArtists(page, size);
     }

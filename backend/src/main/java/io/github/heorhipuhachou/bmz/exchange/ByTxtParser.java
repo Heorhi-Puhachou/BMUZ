@@ -3,11 +3,14 @@ package io.github.heorhipuhachou.bmz.exchange;
 import io.github.heorhipuhachou.bmz.catalogue.PriceType;
 import io.github.heorhipuhachou.bmz.exchange.CatalogueFile.AlbumEntry;
 import io.github.heorhipuhachou.bmz.exchange.CatalogueFile.ArtistEntry;
+import io.github.heorhipuhachou.bmz.exchange.CatalogueFile.CreditEntry;
 import io.github.heorhipuhachou.bmz.exchange.CatalogueFile.LinkEntry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,18 +23,19 @@ public final class ByTxtParser {
 
     private static final Pattern ALIASES = Pattern.compile("^([^\\[].*?) \\((.+)\\)$");
 
+    /** Радок «J:Mors & Lavon Volski» — некалькі выканаўцаў; паміж імёнамі стаіць « & » або «, ». */
+    private static final Pattern CREDIT_SEPARATOR = Pattern.compile(" & |, ");
+
     private static final String NAME_YOUR_PRICE = "name your price";
 
-    private record Album(int year, String title, List<LinkEntry> links) {
-    }
-
-    private record Artist(String name, List<String> aliases, List<Album> albums) {
+    private record PendingAlbum(int year, String title, List<CreditEntry> credit, List<LinkEntry> links) {
     }
 
     public CatalogueFile parse(List<String> lines) {
-        List<Artist> artists = new ArrayList<>();
-        Artist artist = null;
-        Album album = null;
+        Map<String, ArtistEntry> artists = new LinkedHashMap<>();
+        List<PendingAlbum> albums = new ArrayList<>();
+        List<CreditEntry> credit = null;
+        PendingAlbum album = null;
         boolean inBody = false;
 
         for (int i = 0; i < lines.size(); i++) {
@@ -50,8 +54,7 @@ public final class ByTxtParser {
                     continue;
                 }
                 inBody = true;
-                artist = artist(line);
-                artists.add(artist);
+                credit = credit(line, artists);
                 album = null;
                 continue;
             }
@@ -61,8 +64,9 @@ public final class ByTxtParser {
 
             Matcher albumMatch = ALBUM.matcher(line);
             if (albumMatch.matches()) {
-                album = new Album(Integer.parseInt(albumMatch.group(1)), albumMatch.group(2), new ArrayList<>());
-                artist.albums().add(album);
+                album = new PendingAlbum(Integer.parseInt(albumMatch.group(1)), albumMatch.group(2), credit,
+                        new ArrayList<>());
+                albums.add(album);
                 continue;
             }
 
@@ -75,21 +79,33 @@ public final class ByTxtParser {
             throw new ByTxtFormatException(lineNumber, "unrecognised line: " + line.strip());
         }
 
-        List<ArtistEntry> entries = artists.stream()
-                .map(a -> new ArtistEntry(a.name(), a.aliases(), a.albums().stream()
-                        .map(al -> new AlbumEntry(al.year(), al.title(), al.links(), List.of()))
-                        .toList()))
+        List<AlbumEntry> entries = albums.stream()
+                .map(a -> new AlbumEntry(a.year(), a.title(), a.credit(), a.links(), List.of()))
                 .toList();
-        return new CatalogueFile(CatalogueFile.FORMAT_VERSION, List.of(), entries);
+        return new CatalogueFile(CatalogueFile.FORMAT_VERSION, List.of(), List.copyOf(artists.values()), entries);
     }
 
-    private static Artist artist(String line) {
+    private static List<CreditEntry> credit(String line, Map<String, ArtistEntry> artists) {
         Matcher aliases = ALIASES.matcher(line);
         if (aliases.matches()) {
+            String name = aliases.group(1);
             List<String> names = Arrays.stream(aliases.group(2).split(",")).map(String::strip).toList();
-            return new Artist(aliases.group(1), names, new ArrayList<>());
+            artists.putIfAbsent(name, new ArtistEntry(name, names));
+            return List.of(new CreditEntry(name, null));
         }
-        return new Artist(line, List.of(), new ArrayList<>());
+
+        List<CreditEntry> credit = new ArrayList<>();
+        Matcher separator = CREDIT_SEPARATOR.matcher(line);
+        int start = 0;
+        while (separator.find()) {
+            credit.add(new CreditEntry(line.substring(start, separator.start()), separator.group()));
+            start = separator.end();
+        }
+        credit.add(new CreditEntry(line.substring(start), null));
+        for (CreditEntry entry : credit) {
+            artists.putIfAbsent(entry.artist(), new ArtistEntry(entry.artist(), List.of()));
+        }
+        return List.copyOf(credit);
     }
 
     private static LinkEntry link(Matcher m) {

@@ -24,3 +24,15 @@ Graifit (Графит, Графiт)
   2011  Дуплет
         ultra-music.com (the band's release post): free  https://ultra-music.com/news/4631
         iTunes Store: buy                                https://music.apple.com/album/1
+
+Lavon Volski
+  2010  Solo
+        Bandcamp: buy                                    https://example.bandcamp.com/album/solo
+
+J:Mors & Lavon Volski
+  2012  Together
+        Bandcamp: buy                                    https://example.bandcamp.com/album/together
+
+Вольны Хор, Вольны аркестр, Lavon Volski & Зміцер Вайцюшкевіч
+  2020  Four
+        Bandcamp: free (name your price)                 https://example.bandcamp.com/album/four

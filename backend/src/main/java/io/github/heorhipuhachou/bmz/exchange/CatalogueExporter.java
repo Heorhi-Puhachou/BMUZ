@@ -1,12 +1,15 @@
 package io.github.heorhipuhachou.bmz.exchange;
 
+import io.github.heorhipuhachou.bmz.catalogue.AlbumRepository;
 import io.github.heorhipuhachou.bmz.catalogue.ArtistAlias;
 import io.github.heorhipuhachou.bmz.catalogue.ArtistRepository;
+import io.github.heorhipuhachou.bmz.catalogue.Credit;
 import io.github.heorhipuhachou.bmz.catalogue.Link;
 import io.github.heorhipuhachou.bmz.catalogue.LinkDetails;
 import io.github.heorhipuhachou.bmz.catalogue.StoreRepository;
 import io.github.heorhipuhachou.bmz.exchange.CatalogueFile.AlbumEntry;
 import io.github.heorhipuhachou.bmz.exchange.CatalogueFile.ArtistEntry;
+import io.github.heorhipuhachou.bmz.exchange.CatalogueFile.CreditEntry;
 import io.github.heorhipuhachou.bmz.exchange.CatalogueFile.LinkEntry;
 import io.github.heorhipuhachou.bmz.exchange.CatalogueFile.StoreEntry;
 import io.github.heorhipuhachou.bmz.exchange.CatalogueFile.TrackEntry;
@@ -23,11 +26,14 @@ import java.util.List;
 public class CatalogueExporter {
 
     private final ArtistRepository artists;
+    private final AlbumRepository albums;
     private final StoreRepository stores;
     private final JsonMapper json;
 
-    public CatalogueExporter(ArtistRepository artists, StoreRepository stores, JsonMapper json) {
+    public CatalogueExporter(ArtistRepository artists, AlbumRepository albums, StoreRepository stores,
+                             JsonMapper json) {
         this.artists = artists;
+        this.albums = albums;
         this.stores = stores;
         this.json = json;
     }
@@ -38,23 +44,28 @@ public class CatalogueExporter {
                 .map(s -> new StoreEntry(s.getName(), s.getHomepage()))
                 .toList();
         List<ArtistEntry> artistEntries = artists.findAll(Sort.by("name")).stream()
-                .map(artist -> new ArtistEntry(artist.getName(),
-                        artist.getAliases().stream().map(ArtistAlias::getName).toList(),
-                        artist.getAlbums().stream()
-                                .map(album -> new AlbumEntry(album.getYear(), album.getTitle(),
-                                        links(album.getLinks()),
-                                        album.getTracks().stream()
-                                                .map(t -> new TrackEntry(t.getNumber(), t.getTitle(),
-                                                        t.getLengthSeconds(), links(t.getLinks())))
-                                                .toList()))
+                .map(a -> new ArtistEntry(a.getName(), a.getAliases().stream().map(ArtistAlias::getName).toList()))
+                .toList();
+        List<AlbumEntry> albumEntries = albums.findAll(Sort.by("year", "title", "id")).stream()
+                .map(album -> new AlbumEntry(album.getYear(), album.getTitle(), credit(album.getCredits()),
+                        links(album.getLinks()),
+                        album.getTracks().stream()
+                                .map(t -> new TrackEntry(t.getNumber(), t.getTitle(), t.getLengthSeconds(),
+                                        credit(t.getCredits()), links(t.getLinks())))
                                 .toList()))
                 .toList();
-        return new CatalogueFile(CatalogueFile.FORMAT_VERSION, storeEntries, artistEntries);
+        return new CatalogueFile(CatalogueFile.FORMAT_VERSION, storeEntries, artistEntries, albumEntries);
     }
 
     @Transactional(readOnly = true)
     public void exportTo(Path file) {
         json.rebuild().enable(SerializationFeature.INDENT_OUTPUT).build().writeValue(file.toFile(), export());
+    }
+
+    private static List<CreditEntry> credit(List<Credit> credits) {
+        return credits.stream()
+                .map(c -> new CreditEntry(c.getArtist().getName(), c.getJoinPhrase().isEmpty() ? null : c.getJoinPhrase()))
+                .toList();
     }
 
     private static List<LinkEntry> links(List<Link> links) {

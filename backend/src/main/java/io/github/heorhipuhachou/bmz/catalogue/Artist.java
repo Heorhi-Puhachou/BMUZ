@@ -24,10 +24,6 @@ public class Artist {
     @OrderBy("name")
     private List<ArtistAlias> aliases = new ArrayList<>();
 
-    @OneToMany(mappedBy = "artist", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("year, title")
-    private List<Album> albums = new ArrayList<>();
-
     protected Artist() {
     }
 
@@ -37,12 +33,6 @@ public class Artist {
 
     public void addAlias(String aliasName) {
         aliases.add(new ArtistAlias(this, aliasName));
-    }
-
-    public Album addAlbum(int year, String title) {
-        Album album = new Album(this, year, title);
-        albums.add(album);
-        return album;
     }
 
     public Long getId() {
@@ -55,9 +45,5 @@ public class Artist {
 
     public List<ArtistAlias> getAliases() {
         return aliases;
-    }
-
-    public List<Album> getAlbums() {
-        return albums;
     }
 }

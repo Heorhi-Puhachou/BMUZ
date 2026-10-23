@@ -1,13 +1,15 @@
 package io.github.heorhipuhachou.bmz.catalogue;
 
-import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.AlbumHit;
 import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.AlbumSummary;
 import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.AlbumView;
 import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.ArtistSummary;
+import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.ArtistTile;
 import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.ArtistView;
+import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.CreditView;
 import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.LinkView;
 import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.PageView;
 import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.SearchResult;
+import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.TrackHit;
 import io.github.heorhipuhachou.bmz.catalogue.CatalogueViews.TrackView;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,7 +20,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -28,34 +36,53 @@ public class CatalogueService {
 
     private final ArtistRepository artists;
     private final AlbumRepository albums;
+    private final TrackRepository tracks;
     private final JdbcClient jdbc;
 
-    public CatalogueService(ArtistRepository artists, AlbumRepository albums, JdbcClient jdbc) {
+    public CatalogueService(ArtistRepository artists, AlbumRepository albums, TrackRepository tracks,
+                            JdbcClient jdbc) {
         this.artists = artists;
         this.albums = albums;
+        this.tracks = tracks;
         this.jdbc = jdbc;
     }
 
-    public PageView<ArtistSummary> listArtists(int page, int size) {
+    public PageView<ArtistTile> listArtists(int page, int size) {
         Page<Artist> result = artists.findAll(PageRequest.of(page, size, Sort.by("name")));
-        return new PageView<>(result.map(CatalogueService::summary).getContent(), page, size,
-                result.getTotalElements());
+        List<Long> ids = result.getContent().stream().map(Artist::getId).toList();
+        Map<Long, Album> newest = new HashMap<>();
+        for (Object[] row : albums.findNewestFirstByArtists(ids)) {
+            newest.putIfAbsent((Long) row[0], (Album) row[1]);
+        }
+        List<ArtistTile> tiles = result.getContent().stream()
+                .map(a -> new ArtistTile(a.getId(), a.getName(), coverUrl(newest.get(a.getId()))))
+                .toList();
+        return new PageView<>(tiles, page, size, result.getTotalElements());
     }
 
     public ArtistView artist(long id) {
         Artist artist = artists.findById(id).orElseThrow(() -> notFound("artist", id));
+        List<Album> own = albums.findByArtist(id);
+        Set<Long> ownIds = own.stream().map(Album::getId).collect(Collectors.toSet());
+        List<TrackHit> otherTracks = tracks.findCreditedToArtist(id).stream()
+                .filter(t -> !ownIds.contains(t.getAlbum().getId()))
+                .map(t -> new TrackHit(t.getId(), t.getNumber(), t.getTitle(), credit(t.getCredits()),
+                        summary(t.getAlbum())))
+                .toList();
         return new ArtistView(artist.getId(), artist.getName(),
                 artist.getAliases().stream().map(ArtistAlias::getName).toList(),
-                artist.getAlbums().stream().map(a -> new AlbumSummary(a.getId(), a.getYear(), a.getTitle())).toList());
+                own.stream().map(CatalogueService::summary).toList(),
+                otherTracks);
     }
 
     public AlbumView album(long id) {
         Album album = albums.findById(id).orElseThrow(() -> notFound("album", id));
-        List<TrackView> tracks = album.getTracks().stream()
+        List<TrackView> trackViews = album.getTracks().stream()
                 .map(t -> new TrackView(t.getId(), t.getNumber(), t.getTitle(), t.getLengthSeconds(),
-                        t.getLinks().stream().map(CatalogueService::view).toList()))
+                        credit(t.getCredits()), t.getLinks().stream().map(CatalogueService::view).toList()))
                 .toList();
-        return new AlbumView(album.getId(), album.getYear(), album.getTitle(), summary(album.getArtist()), tracks,
+        return new AlbumView(album.getId(), album.getYear(), album.getTitle(), coverUrl(album),
+                credit(album.getCredits()), trackViews,
                 album.getLinks().stream().map(CatalogueService::view).toList());
     }
 
@@ -81,25 +108,42 @@ public class CatalogueService {
                 .param("limit", SEARCH_LIMIT)
                 .query((rs, n) -> new ArtistSummary(rs.getLong("id"), rs.getString("name")))
                 .list();
-        List<AlbumHit> foundAlbums = jdbc.sql("""
-                        SELECT al.id, al.year, al.title, a.id AS artist_id, a.name AS artist_name
-                        FROM album al
-                        JOIN artist a ON a.id = al.artist_id
-                        WHERE al.title ILIKE '%' || :q || '%'
-                           OR :q <% al.title
-                        ORDER BY word_similarity(:q, al.title) DESC, al.title
+        List<Long> albumIds = jdbc.sql("""
+                        SELECT id
+                        FROM album
+                        WHERE title ILIKE '%' || :q || '%'
+                           OR :q <% title
+                        ORDER BY word_similarity(:q, title) DESC, title
                         LIMIT :limit
                         """)
                 .param("q", q)
                 .param("limit", SEARCH_LIMIT)
-                .query((rs, n) -> new AlbumHit(rs.getLong("id"), rs.getInt("year"), rs.getString("title"),
-                        new ArtistSummary(rs.getLong("artist_id"), rs.getString("artist_name"))))
+                .query(Long.class)
                 .list();
+        Map<Long, Album> found = albums.findAllById(albumIds).stream()
+                .collect(Collectors.toMap(Album::getId, Function.identity()));
+        List<AlbumSummary> foundAlbums = albumIds.stream()
+                .map(found::get)
+                .filter(Objects::nonNull)
+                .map(CatalogueService::summary)
+                .toList();
         return new SearchResult(foundArtists, foundAlbums);
     }
 
-    private static ArtistSummary summary(Artist artist) {
-        return new ArtistSummary(artist.getId(), artist.getName());
+    private static AlbumSummary summary(Album album) {
+        return new AlbumSummary(album.getId(), album.getYear(), album.getTitle(), coverUrl(album),
+                credit(album.getCredits()));
+    }
+
+    private static List<CreditView> credit(List<Credit> credits) {
+        return credits.stream()
+                .map(c -> new CreditView(c.getArtist().getId(), c.getArtist().getName(), c.getJoinPhrase()))
+                .toList();
+    }
+
+    /** Вокладак пакуль няма: яны зьявяцца разам з табліцай {@code cover} (крок 6 пляну). */
+    private static String coverUrl(Album album) {
+        return null;
     }
 
     private static LinkView view(Link link) {

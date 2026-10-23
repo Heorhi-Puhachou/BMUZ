@@ -1,6 +1,8 @@
 package io.github.heorhipuhachou.bmz.catalogue;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -10,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
+import jakarta.persistence.OrderColumn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +34,12 @@ public class Track {
 
     private Integer lengthSeconds;
 
+    /** Пусты, калі ў трэка тыя самыя выканаўцы, што ў альбома. */
+    @ElementCollection
+    @CollectionTable(name = "track_credit", joinColumns = @JoinColumn(name = "track_id"))
+    @OrderColumn(name = "position")
+    private List<Credit> credits = new ArrayList<>();
+
     @OneToMany(mappedBy = "track", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id")
     private List<Link> links = new ArrayList<>();
@@ -38,11 +47,12 @@ public class Track {
     protected Track() {
     }
 
-    Track(Album album, int number, String title, Integer lengthSeconds) {
+    Track(Album album, int number, String title, Integer lengthSeconds, List<Credit> credits) {
         this.album = album;
         this.number = number;
         this.title = title;
         this.lengthSeconds = lengthSeconds;
+        this.credits.addAll(credits);
     }
 
     public Link addLink(Store store, LinkDetails details) {
@@ -55,6 +65,10 @@ public class Track {
         return id;
     }
 
+    public Album getAlbum() {
+        return album;
+    }
+
     public int getNumber() {
         return number;
     }
@@ -65,6 +79,10 @@ public class Track {
 
     public Integer getLengthSeconds() {
         return lengthSeconds;
+    }
+
+    public List<Credit> getCredits() {
+        return credits;
     }
 
     public List<Link> getLinks() {

@@ -14,26 +14,34 @@ public final class CatalogueViews {
     public record ArtistSummary(long id, String name) {
     }
 
-    public record AlbumSummary(long id, int year, String title) {
+    public record ArtistTile(long id, String name, String coverUrl) {
     }
 
-    public record AlbumHit(long id, int year, String title, ArtistSummary artist) {
+    public record CreditView(long artistId, String name, String joinPhrase) {
     }
 
-    public record ArtistView(long id, String name, List<String> aliases, List<AlbumSummary> albums) {
+    public record AlbumSummary(long id, int year, String title, String coverUrl, List<CreditView> credit) {
+    }
+
+    public record TrackHit(long id, int number, String title, List<CreditView> credit, AlbumSummary album) {
+    }
+
+    public record ArtistView(long id, String name, List<String> aliases, List<AlbumSummary> albums,
+                             List<TrackHit> otherTracks) {
     }
 
     public record LinkView(String store, String url, PriceType priceType, BigDecimal minPrice, String currency,
                            String note) {
     }
 
-    public record TrackView(long id, int number, String title, Integer lengthSeconds, List<LinkView> links) {
-    }
-
-    public record AlbumView(long id, int year, String title, ArtistSummary artist, List<TrackView> tracks,
+    public record TrackView(long id, int number, String title, Integer lengthSeconds, List<CreditView> credit,
                             List<LinkView> links) {
     }
 
-    public record SearchResult(List<ArtistSummary> artists, List<AlbumHit> albums) {
+    public record AlbumView(long id, int year, String title, String coverUrl, List<CreditView> credit,
+                            List<TrackView> tracks, List<LinkView> links) {
+    }
+
+    public record SearchResult(List<ArtistSummary> artists, List<AlbumSummary> albums) {
     }
 }
