@@ -1,0 +1,9 @@
+services:
+  postgres:
+    image: 'postgres:18'
+    environment:
+      - 'POSTGRES_DB=bmz'
+      - 'POSTGRES_USER=bmz'
+      - 'POSTGRES_PASSWORD=bmz-local'
+    ports:
+      - '5432'
