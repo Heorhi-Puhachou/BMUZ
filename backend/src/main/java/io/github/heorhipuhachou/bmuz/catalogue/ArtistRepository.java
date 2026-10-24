@@ -6,11 +6,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface ArtistRepository extends JpaRepository<Artist, Long> {
 
     Optional<Artist> findFirstByName(String name);
+
+    @Query("SELECT ar.id FROM Artist ar ORDER BY ar.id")
+    List<Long> findAllIds();
 
     /** Выканаўцы, у якіх ёсьць хоць адзін бясплатны альбом. */
     @Query("SELECT ar FROM Artist ar WHERE EXISTS (SELECT a.id FROM Album a JOIN a.credits c WHERE c.artist = ar AND "

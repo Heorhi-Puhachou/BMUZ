@@ -10,6 +10,9 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
 
     List<Album> findByYearAndTitle(int year, String title);
 
+    @Query("SELECT a.id FROM Album a ORDER BY a.id")
+    List<Long> findAllIds();
+
     @Query("SELECT a FROM Album a JOIN a.credits c WHERE c.artist.id = :artistId AND " + FreeFilter.ALBUM_A
             + " ORDER BY a.year, a.title")
     List<Album> findByArtist(long artistId, boolean freeOnly, Collection<PriceType> freeTypes);
