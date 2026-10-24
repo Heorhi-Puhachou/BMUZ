@@ -33,5 +33,7 @@ provider "aws" {
 locals {
   account = "899012776854"
   region  = "eu-north-1"
-  repo    = "Heorhi-Puhachou/BMUZ"
+  # Як рэпазыторый стаіць у токене GitHub (поле sub): з нумарамі ўладальніка і рэпазыторыя,
+  # бо ён створаны пасьля 15.07.2026.
+  repo = "Heorhi-Puhachou@60034257/BMUZ@1431300035"
 }
