@@ -330,6 +330,26 @@ class ArtistEditingTest {
     }
 
     @Test
+    void theSuperAdminDeletesOnlyAnEmptyArtist() throws Exception {
+        assertThat(call(HttpMethod.DELETE, "/api/super/artists/" + band, null, admin)).as("has an album")
+                .isEqualTo(409);
+        assertThat(call(HttpMethod.DELETE, "/api/edit/albums/" + bandAlbum, null, admin)).isEqualTo(204);
+        MockHttpSession artist = newArtistAccount();
+        assertThat(call(HttpMethod.DELETE, "/api/super/artists/" + band, null, artist)).isEqualTo(403);
+        assertThat(call(HttpMethod.DELETE, "/api/super/artists/" + band, null, admin)).as("has an account")
+                .isEqualTo(409);
+
+        long userId = id("SELECT id FROM app_user WHERE email = '" + ARTIST + "'");
+        call(HttpMethod.DELETE, "/api/super/artists/" + band + "/members/" + userId, null, admin);
+        assertThat(call(HttpMethod.DELETE, "/api/super/artists/" + band, null, admin)).isEqualTo(204);
+        assertThat(call(HttpMethod.GET, "/api/artists/" + band, null, null)).isEqualTo(404);
+        mvc.perform(get("/api/admin/edits").session(admin))
+                .andExpect(jsonPath("$[0].action").value("ARTIST_DELETE"))
+                .andExpect(jsonPath("$[0].subject").value("Band"));
+        assertThat(call(HttpMethod.DELETE, "/api/super/artists/" + band, null, admin)).isEqualTo(404);
+    }
+
+    @Test
     void letsTheAdminEditAnyArtist() throws Exception {
         assertThat(call(HttpMethod.PUT, "/api/edit/artists/" + stranger, "{\"name\":\"Stranger\",\"aliases\":[]}",
                 admin)).isEqualTo(204);

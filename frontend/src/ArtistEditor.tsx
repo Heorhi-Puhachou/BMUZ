@@ -2,12 +2,13 @@ import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import type { Artist } from './api'
-import { reason, send } from './auth'
+import { reason, send, useAuth } from './auth'
 
 // Рэдагаваньне выканаўцы — для адміністратара і для самога выканаўцы. Зьмены бачныя на сайце адразу.
 export default function ArtistEditor({ artist, onChange }: { artist: Artist; onChange: () => void }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { me } = useAuth()
   const [name, setName] = useState(artist.name)
   const [aliases, setAliases] = useState(artist.aliases.join('\n'))
   const [year, setYear] = useState(() => String(new Date().getFullYear()))
@@ -30,6 +31,19 @@ export default function ArtistEditor({ artist, onChange }: { artist: Artist; onC
     const response = await send('POST', '/api/edit/albums', body, true)
     if (response.ok) {
       navigate(`/albums/${(await response.json()).id}`)
+    } else {
+      setMessage(t('admin.failed', { reason: await reason(response) }))
+    }
+  }
+
+  // Сэрвэр адмаўляе, пакуль у выканаўцы ёсьць альбомы, трэкі, падстава для вокладак або ўліковыя запісы.
+  async function deleteArtist() {
+    if (!window.confirm(t('edit.confirmDeleteArtist', { name: artist.name }))) {
+      return
+    }
+    const response = await send('DELETE', `/api/super/artists/${artist.id}`)
+    if (response.ok) {
+      navigate('/')
     } else {
       setMessage(t('admin.failed', { reason: await reason(response) }))
     }
@@ -63,6 +77,13 @@ export default function ArtistEditor({ artist, onChange }: { artist: Artist; onC
         <button type="submit">{t('edit.create')}</button>
       </form>
       {message && <p role="status">{message}</p>}
+      {me?.role === 'SUPER_ADMIN' && (
+        <p>
+          <button type="button" onClick={deleteArtist}>
+            {t('edit.deleteArtist')}
+          </button>
+        </p>
+      )}
     </section>
   )
 }

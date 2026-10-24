@@ -1,4 +1,4 @@
-// Робіць be.json (афіцыйны правапіс) і be-Latn.json (łacinka) з be-tarask.json праз orthography-converter.
+// Робіць afi.json (афіцыйны правапіс) і lac.json (łacinka) з tar.json праз orthography-converter.
 // Пасьля канвэртацыі накладае ручныя выключэньні з overrides.json. Кожнае выключэньне памятае тэкст тарашкевіцы,
 // для якога зроблена, і калі той тэкст зьмяніўся, скрыпт спыняецца: выключэньне трэба перарабіць.
 // Потым правярае вынік, перш чым запісаць:
@@ -15,14 +15,14 @@ import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const messages = resolve(here, '../src/messages')
-const source = join(messages, 'be-tarask.json')
+const source = join(messages, 'tar.json')
 const jar =
   process.env.ORTHOGRAPHY_CONVERTER_JAR ??
   resolve(here, '../../../orthography-converter/target/orthography-converter.jar')
 
 const targets = [
-  { tag: 'be', orthography: 'KA' },
-  { tag: 'be-Latn', orthography: 'ŁT' },
+  { tag: 'be', file: 'afi.json', orthography: 'KA' },
+  { tag: 'be-Latn', file: 'lac.json', orthography: 'ŁT' },
 ]
 
 function flatten(object, prefix = '') {
@@ -52,13 +52,13 @@ const work = mkdtempSync(join(tmpdir(), 'bmuz-messages-'))
 const problems = []
 
 try {
-  for (const { tag, orthography } of targets) {
-    const out = join(work, `${tag}.json`)
+  for (const { tag, file, orthography } of targets) {
+    const out = join(work, file)
     execFileSync('java', ['-jar', jar, 'KK', source, orthography, out], { stdio: 'inherit' })
     const converted = JSON.parse(readFileSync(out, 'utf8'))
     for (const [path, override] of Object.entries(overrides[tag] ?? {})) {
       if (sourceEntries.get(path) !== override.source) {
-        problems.push(`${tag} ${path}: be-tarask.json changed since this override was written; redo it`)
+        problems.push(`${tag} ${path}: tar.json changed since this override was written; redo it`)
         continue
       }
       setPath(converted, path, override.text)
@@ -66,7 +66,7 @@ try {
 
     const entries = new Map(flatten(converted))
     if ([...entries.keys()].join() !== [...sourceEntries.keys()].join()) {
-      problems.push(`${tag}: keys differ from be-tarask.json`)
+      problems.push(`${tag}: keys differ from tar.json`)
     }
     for (const [key, original] of sourceEntries) {
       const text = entries.get(key) ?? ''
@@ -83,8 +83,8 @@ try {
       }
     }
     if (problems.length === 0) {
-      writeFileSync(join(messages, `${tag}.json`), JSON.stringify(converted, null, 2) + '\n')
-      console.log(`wrote src/messages/${tag}.json`)
+      writeFileSync(join(messages, file), JSON.stringify(converted, null, 2) + '\n')
+      console.log(`wrote src/messages/${file}`)
     }
   }
 } finally {

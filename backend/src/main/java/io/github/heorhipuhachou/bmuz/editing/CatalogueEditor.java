@@ -125,6 +125,27 @@ public class CatalogueEditor {
         log.record(editor, "ARTIST_UPDATE", name, artistId, null, before, new ArtistState(name, aliases));
     }
 
+    /**
+     * Толькі пусты выканаўца: без альбомаў, трэкаў, падставы для вокладак і ўліковых запісаў. Альбомы выдаляюцца
+     * паасобку, каб кожны застаўся ў журнале; падстава — доказ дазволу, і яе не выдаляюць мімаходзь.
+     */
+    @Transactional
+    public void deleteArtist(long artistId, String email) {
+        Editor editor = editor(email);
+        Artist artist = artists.findById(artistId).orElseThrow(() -> notFound("artist"));
+        if (uses("album_credit", artistId) || uses("track_credit", artistId)) {
+            throw conflict("the artist still has albums or tracks");
+        }
+        if (uses("permission", artistId)) {
+            throw conflict("the artist has a cover basis on record");
+        }
+        if (uses("artist_member", artistId)) {
+            throw conflict("the artist still has accounts; remove them on the team panel first");
+        }
+        log.record(editor, "ARTIST_DELETE", artist.getName(), artistId, null, state(artist), null);
+        artists.delete(artist);
+    }
+
     @Transactional
     public Created createAlbum(AlbumInput input, String email) {
         Editor editor = editor(email);
@@ -350,6 +371,11 @@ public class CatalogueEditor {
                 embedCode);
     }
 
+    private boolean uses(String table, long artistId) {
+        return jdbc.sql("SELECT EXISTS (SELECT 1 FROM " + table + " WHERE artist_id = ?)").param(artistId)
+                .query(Boolean.class).single();
+    }
+
     private void touched(long albumId) {
         entities.flush();
         jdbc.sql("UPDATE album SET updated_at = now() WHERE id = ?").param(albumId).update();
@@ -393,6 +419,10 @@ public class CatalogueEditor {
 
     private static ResponseStatusException bad(String reason) {
         return new ResponseStatusException(HttpStatus.BAD_REQUEST, reason);
+    }
+
+    private static ResponseStatusException conflict(String reason) {
+        return new ResponseStatusException(HttpStatus.CONFLICT, reason);
     }
 
     private static ResponseStatusException notFound(String what) {

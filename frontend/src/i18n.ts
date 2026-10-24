@@ -1,11 +1,12 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
-import be from './messages/be.json'
-import beLatn from './messages/be-Latn.json'
-import beTarask from './messages/be-tarask.json'
+import afi from './messages/afi.json'
+import lac from './messages/lac.json'
+import tar from './messages/tar.json'
 
 // Тарашкевіца — асноўны правапіс; астатнія два робіць з яе `npm run messages`.
 // Назва кожнага варыянта напісаная ім самім, таму яе не перакладаюць.
+// tag — міжнародны код мовы для <html lang>; файлы названыя коратка, а коды tar, afi, lac занятыя іншымі мовамі.
 export const SPELLINGS = [
   { tag: 'be-tarask', label: 'ТАР', name: 'Тарашкевіца' },
   { tag: 'be', label: 'АФІ', name: 'Афіцыйны правапіс' },
@@ -26,9 +27,9 @@ function savedSpelling() {
 
 i18n.use(initReactI18next).init({
   resources: {
-    'be-tarask': { translation: beTarask },
-    be: { translation: be },
-    'be-Latn': { translation: beLatn },
+    'be-tarask': { translation: tar },
+    be: { translation: afi },
+    'be-Latn': { translation: lac },
   },
   lng: savedSpelling(),
   fallbackLng: DEFAULT,

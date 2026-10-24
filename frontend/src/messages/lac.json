@@ -152,6 +152,8 @@
     "trackShort": "Trek {{number}}",
     "deleteAlbum": "Vydalić albom",
     "confirmDelete": "Vydalić «{{title}}» razam z trekami, spasyłkami i vokładkaj?",
+    "deleteArtist": "Vydalić vykanaŭcu",
+    "confirmDeleteArtist": "Vydalić «{{name}}»? Heta mahčyma, tolki kali ŭ vykanaŭcy ŭžo niama albomaŭ, trekaŭ, padstavy dla vokładak i ŭlikovych zapisaŭ.",
     "coverConsent": "Zahružajučy vokładku, vy dazvalajecie sajtu zachoŭvać i pakazvać jaje na staronkach vašych albomaŭ."
   },
   "members": {

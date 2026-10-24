@@ -49,6 +49,13 @@ class EditController {
         editor.updateArtist(id, input, auth.getName());
     }
 
+    /** Толькі для супэрадміністратара (/api/super/**). */
+    @DeleteMapping("/api/super/artists/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void deleteArtist(@PathVariable long id, Authentication auth) {
+        editor.deleteArtist(id, auth.getName());
+    }
+
     @PostMapping("/api/edit/albums")
     @ResponseStatus(HttpStatus.CREATED)
     Created createAlbum(@RequestBody AlbumInput input, Authentication auth) {

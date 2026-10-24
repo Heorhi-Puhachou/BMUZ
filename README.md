@@ -62,7 +62,7 @@ npm run dev             # http://localhost:5173
 
 ## Правапісы
 
-Тэксты старонак пішуцца толькі ў `frontend/src/messages/be-tarask.json`.
+Тэксты старонак пішуцца толькі ў `frontend/src/messages/tar.json`.
 Афіцыйны правапіс і łacinka робяцца з іх праграмай
 [orthography-converter](https://github.com/Heorhi-Puhachou/orthography-converter),
 сабранай побач з гэтым рэпазыторыем:
