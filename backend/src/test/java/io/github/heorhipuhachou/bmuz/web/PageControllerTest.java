@@ -75,6 +75,15 @@ class PageControllerTest {
     }
 
     @Test
+    void servesTheAccountPagesOpenedFromAMail() throws Exception {
+        for (String path : new String[]{"/login", "/admin", "/register", "/confirm?token=x", "/forgot", "/reset?token=x"}) {
+            mvc.perform(get(path))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("<div id=\"root\"></div>")));
+        }
+    }
+
+    @Test
     void leavesTheApiAlone() throws Exception {
         mvc.perform(get("/api/albums/{id}", albumId))
                 .andExpect(status().isOk())

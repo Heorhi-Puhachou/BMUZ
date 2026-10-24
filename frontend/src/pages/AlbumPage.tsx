@@ -1,7 +1,12 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router'
 import { type Album, creditText, useApi } from '../api'
+import AlbumEditor from '../AlbumEditor'
+import ArtistCover from '../ArtistCover'
+import { canEdit, isAdmin, useAuth } from '../auth'
 import Cover from '../Cover'
+import CoverAdmin from '../CoverAdmin'
 import Credit from '../Credit'
 import LinkList from '../LinkList'
 import Status from '../Status'
@@ -17,7 +22,9 @@ function formatLength(seconds: number | null) {
 export default function AlbumPage() {
   const { t } = useTranslation()
   const { id } = useParams()
-  const loaded = useApi<Album>(`/api/albums/${id}`)
+  const { me } = useAuth()
+  const [reload, setReload] = useState(0)
+  const loaded = useApi<Album>(`/api/albums/${id}`, reload)
   useTitle(loaded.state === 'ok' ? `${loaded.data.title} — ${creditText(loaded.data.credit)}` : undefined)
 
   if (loaded.state !== 'ok') {
@@ -28,7 +35,22 @@ export default function AlbumPage() {
   return (
     <>
       <div className="album-head">
-        <Cover url={album.coverUrl} title={album.title} />
+        <figure className="album-cover">
+          <Cover url={album.coverUrl} title={album.title} />
+          {album.coverLicence && (
+            <figcaption className="muted small">
+              {t('album.coverLicence', { licence: album.coverLicence })}
+              {album.coverSource && (
+                <>
+                  {' · '}
+                  <a href={album.coverSource} rel="noopener" target="_blank">
+                    {t('album.coverSource')}
+                  </a>
+                </>
+              )}
+            </figcaption>
+          )}
+        </figure>
         <div>
           <h1>{album.title}</h1>
           <p>
@@ -37,6 +59,14 @@ export default function AlbumPage() {
           </p>
         </div>
       </div>
+
+      {isAdmin(me) && <CoverAdmin album={album} onChange={() => setReload((r) => r + 1)} />}
+      {!isAdmin(me) && canEdit(me, album.credit.map((c) => c.artistId)) && (
+        <ArtistCover album={album} onChange={() => setReload((r) => r + 1)} />
+      )}
+      {canEdit(me, album.credit.map((c) => c.artistId)) && (
+        <AlbumEditor key={album.id} album={album} onChange={() => setReload((r) => r + 1)} />
+      )}
 
       <h2>{t('album.where')}</h2>
       <LinkList links={album.links} />

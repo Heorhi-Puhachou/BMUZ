@@ -61,6 +61,11 @@ public class Track {
         return link;
     }
 
+    public void update(String title, Integer lengthSeconds) {
+        this.title = title;
+        this.lengthSeconds = lengthSeconds;
+    }
+
     public Long getId() {
         return id;
     }

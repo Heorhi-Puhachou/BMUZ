@@ -15,6 +15,9 @@ cdk.out/
 # Python
 __pycache__/
 
+# Covers uploaded while developing locally
+covers-local/
+
 # Secrets and local settings
 .env
 .env.*

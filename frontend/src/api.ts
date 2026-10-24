@@ -53,6 +53,7 @@ export interface Artist {
 }
 
 export interface Link {
+  id: number
   store: string
   url: string
   priceType: PriceType
@@ -75,6 +76,8 @@ export interface Album {
   year: number
   title: string
   coverUrl: string | null
+  coverLicence: string | null
+  coverSource: string | null
   credit: CreditEntry[]
   tracks: Track[]
   links: Link[]
@@ -91,8 +94,9 @@ export type Loaded<T> =
   | { state: 'notFound' }
   | { state: 'ok'; data: T }
 
-export function useApi<T>(path: string): Loaded<T> {
-  const [result, setResult] = useState<{ path: string; loaded: Loaded<T> } | null>(null)
+/** `reload` — лічыльнік: калі ён мяняецца, дадзеныя загружаюцца нанова (напрыклад, пасьля загрузкі вокладкі). */
+export function useApi<T>(path: string, reload = 0): Loaded<T> {
+  const [result, setResult] = useState<{ path: string; reload: number; loaded: Loaded<T> } | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -109,11 +113,11 @@ export function useApi<T>(path: string): Loaded<T> {
       .catch(() => ({ state: 'error' }) as const)
       .then((loaded) => {
         if (!controller.signal.aborted) {
-          setResult({ path, loaded })
+          setResult({ path, reload, loaded })
         }
       })
     return () => controller.abort()
-  }, [path])
+  }, [path, reload])
 
-  return result?.path === path ? result.loaded : { state: 'loading' }
+  return result?.path === path && result.reload === reload ? result.loaded : { state: 'loading' }
 }

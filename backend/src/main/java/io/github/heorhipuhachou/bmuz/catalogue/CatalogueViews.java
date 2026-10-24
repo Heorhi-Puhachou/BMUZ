@@ -30,7 +30,7 @@ public final class CatalogueViews {
                              List<TrackHit> otherTracks) {
     }
 
-    public record LinkView(String store, String url, PriceType priceType, BigDecimal minPrice, String currency,
+    public record LinkView(long id, String store, String url, PriceType priceType, BigDecimal minPrice, String currency,
                            String note) {
     }
 
@@ -38,8 +38,10 @@ public final class CatalogueViews {
                             List<LinkView> links) {
     }
 
-    public record AlbumView(long id, int year, String title, String coverUrl, List<CreditView> credit,
-                            List<TrackView> tracks, List<LinkView> links) {
+    /** coverLicence і coverSource ёсьць толькі ў вокладкі пад адкрытай ліцэнзіяй: іх трэба паказваць побач. */
+    public record AlbumView(long id, int year, String title, String coverUrl, String coverLicence,
+                            String coverSource, List<CreditView> credit, List<TrackView> tracks,
+                            List<LinkView> links) {
     }
 
     public record SearchResult(List<ArtistSummary> artists, List<AlbumSummary> albums) {

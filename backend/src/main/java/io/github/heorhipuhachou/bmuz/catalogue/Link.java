@@ -67,6 +67,21 @@ public class Link {
         return new Link(store, null, track, details);
     }
 
+    /** Код плэера застаецца ранейшы: яго ўстаўляе толькі адміністратар. */
+    public void update(Store store, LinkDetails details) {
+        this.store = store;
+        this.url = details.url();
+        this.priceType = details.priceType();
+        this.minPrice = details.minPrice();
+        this.currency = details.currency();
+        this.note = details.note();
+    }
+
+    /** Альбом, да якога належыць спасылка, — наўпрост або праз трэк. */
+    public Album owningAlbum() {
+        return album != null ? album : track.getAlbum();
+    }
+
     public LinkDetails details() {
         return new LinkDetails(url, priceType, minPrice, currency, note, embedCode);
     }

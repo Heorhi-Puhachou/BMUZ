@@ -1,6 +1,10 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { type AlbumSummary, type Artist, useApi } from '../api'
+import ArtistEditor from '../ArtistEditor'
+import ArtistMembers from '../ArtistMembers'
+import { canEdit, useAuth } from '../auth'
 import Cover from '../Cover'
 import Credit from '../Credit'
 import { useFreeOnly, withFree } from '../freeOnly'
@@ -16,7 +20,9 @@ export default function ArtistPage() {
   const { t } = useTranslation()
   const { id } = useParams()
   const { freeOnly } = useFreeOnly()
-  const loaded = useApi<Artist>(withFree(`/api/artists/${id}`, freeOnly))
+  const { me } = useAuth()
+  const [reload, setReload] = useState(0)
+  const loaded = useApi<Artist>(withFree(`/api/artists/${id}`, freeOnly), reload)
   useTitle(loaded.state === 'ok' ? loaded.data.name : undefined)
 
   if (loaded.state !== 'ok') {
@@ -30,6 +36,9 @@ export default function ArtistPage() {
       {artist.aliases.length > 0 && (
         <p className="muted">{t('artist.aliases', { names: artist.aliases.join(', ') })}</p>
       )}
+
+      {canEdit(me, [artist.id]) && <ArtistEditor key={artist.id} artist={artist} onChange={() => setReload((r) => r + 1)} />}
+      {me?.role === 'SUPER_ADMIN' && <ArtistMembers artistId={artist.id} />}
 
       {artist.albums.length > 0 && (
         <>

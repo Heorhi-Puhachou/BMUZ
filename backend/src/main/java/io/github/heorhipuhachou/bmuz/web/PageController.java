@@ -59,6 +59,14 @@ class PageController {
         return page(HttpStatus.OK, "Пра сайт — " + SITE, SITE_DESCRIPTION);
     }
 
+    /** Старонкі ўліковага запісу. Іх адкрываюць наўпрост — у тым ліку спасылкай з ліста, — таму сэрвэр мусіць іх аддаваць. */
+    @GetMapping(value = {"/login", "/admin", "/register", "/confirm", "/forgot", "/reset", "/invite", "/edits", "/team",
+            "/account", "/email"},
+            produces = MediaType.TEXT_HTML_VALUE)
+    ResponseEntity<String> account() {
+        return page(HttpStatus.OK, SITE, SITE_DESCRIPTION);
+    }
+
     @GetMapping(value = "/artists/{id}", produces = MediaType.TEXT_HTML_VALUE)
     ResponseEntity<String> artist(@PathVariable long id) {
         ArtistView artist;

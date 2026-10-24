@@ -1,13 +1,20 @@
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useNavigate, useSearchParams } from 'react-router'
+import { isAdmin, send, useAuth } from './auth'
 import { useFreeOnly } from './freeOnly'
 import { SPELLINGS } from './i18n'
 
 export default function Layout() {
   const { t, i18n } = useTranslation()
   const { freeOnly, setFreeOnly } = useFreeOnly()
+  const { me, setMe, registration } = useAuth()
   const navigate = useNavigate()
+
+  async function logout() {
+    await send('POST', '/api/auth/logout')
+    setMe(null)
+  }
   const [params] = useSearchParams()
   const [query, setQuery] = useState(params.get('q') ?? '')
 
@@ -39,13 +46,46 @@ export default function Layout() {
                 </button>
               ))}
             </nav>
-            <label className="free-only">
-              <input type="checkbox" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} />
-              {t('filter.freeOnly')}
-            </label>
+            <div className="topbar-right">
+              {me ? (
+                <span className="account" title={t('account.signedIn', { email: me.email })}>
+                  <Link to="/account">{me.email}</Link>
+                  {me.role === 'SUPER_ADMIN' && ` (${t('account.superMark')})`}
+                  {me.role === 'ADMIN' && ` (${t('account.adminMark')})`}
+                  {me.role === 'ARTIST' && ` (${t('account.artistMark')})`} ·{' '}
+                  {me.role === 'SUPER_ADMIN' && (
+                    <>
+                      <Link to="/team">{t('team.heading')}</Link> ·{' '}
+                    </>
+                  )}
+                  {isAdmin(me) && (
+                    <>
+                      <Link to="/edits">{t('edits.heading')}</Link> ·{' '}
+                    </>
+                  )}
+                  <button type="button" className="link-button" onClick={logout}>
+                    {t('account.logout')}
+                  </button>
+                </span>
+              ) : (
+                <span className="account">
+                  <Link to="/login">{t('account.login')}</Link>
+                  {registration && (
+                    <>
+                      {' · '}
+                      <Link to="/register">{t('account.register')}</Link>
+                    </>
+                  )}
+                </span>
+              )}
+            </div>
           </div>
           <Link to="/" className="site-title">{t('site.title')}</Link>
           <p className="tagline">{t('site.tagline')}</p>
+          <label className="free-only">
+            <input type="checkbox" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} />
+            {t('filter.freeOnly')}
+          </label>
           <form className="search" role="search" onSubmit={search}>
             <input
               type="search"

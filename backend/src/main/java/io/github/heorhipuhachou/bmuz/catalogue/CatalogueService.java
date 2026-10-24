@@ -11,6 +11,8 @@ import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.PageView;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.SearchResult;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.TrackHit;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.TrackView;
+import io.github.heorhipuhachou.bmuz.cover.CoverService;
+import io.github.heorhipuhachou.bmuz.cover.CoverService.CoverUrls;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,13 +40,15 @@ public class CatalogueService {
     private final ArtistRepository artists;
     private final AlbumRepository albums;
     private final TrackRepository tracks;
+    private final CoverService covers;
     private final JdbcClient jdbc;
 
     public CatalogueService(ArtistRepository artists, AlbumRepository albums, TrackRepository tracks,
-                            JdbcClient jdbc) {
+                            CoverService covers, JdbcClient jdbc) {
         this.artists = artists;
         this.albums = albums;
         this.tracks = tracks;
+        this.covers = covers;
         this.jdbc = jdbc;
     }
 
@@ -57,8 +62,9 @@ public class CatalogueService {
         for (Object[] row : albums.findNewestFirstByArtists(ids, freeOnly, FreeFilter.FREE_TYPES)) {
             newest.putIfAbsent((Long) row[0], (Album) row[1]);
         }
+        Map<Long, CoverUrls> coverUrls = covers.urls(newest.values().stream().map(Album::getId).toList());
         List<ArtistTile> tiles = result.getContent().stream()
-                .map(a -> new ArtistTile(a.getId(), a.getName(), coverUrl(newest.get(a.getId()))))
+                .map(a -> new ArtistTile(a.getId(), a.getName(), small(newest.get(a.getId()), coverUrls)))
                 .toList();
         return new PageView<>(tiles, page, size, result.getTotalElements());
     }
@@ -67,14 +73,19 @@ public class CatalogueService {
         Artist artist = artists.findById(id).orElseThrow(() -> notFound("artist", id));
         List<Album> own = albums.findByArtist(id, freeOnly, FreeFilter.FREE_TYPES);
         Set<Long> ownIds = own.stream().map(Album::getId).collect(Collectors.toSet());
-        List<TrackHit> otherTracks = tracks.findCreditedToArtist(id, freeOnly, FreeFilter.FREE_TYPES).stream()
+        List<Track> credited = tracks.findCreditedToArtist(id, freeOnly, FreeFilter.FREE_TYPES).stream()
                 .filter(t -> !ownIds.contains(t.getAlbum().getId()))
+                .toList();
+        List<Long> shownAlbums = new ArrayList<>(ownIds);
+        credited.forEach(t -> shownAlbums.add(t.getAlbum().getId()));
+        Map<Long, CoverUrls> coverUrls = covers.urls(shownAlbums);
+        List<TrackHit> otherTracks = credited.stream()
                 .map(t -> new TrackHit(t.getId(), t.getNumber(), t.getTitle(), credit(t.getCredits()),
-                        summary(t.getAlbum())))
+                        summary(t.getAlbum(), coverUrls)))
                 .toList();
         return new ArtistView(artist.getId(), artist.getName(),
                 artist.getAliases().stream().map(ArtistAlias::getName).toList(),
-                own.stream().map(CatalogueService::summary).toList(),
+                own.stream().map(a -> summary(a, coverUrls)).toList(),
                 otherTracks);
     }
 
@@ -84,7 +95,11 @@ public class CatalogueService {
                 .map(t -> new TrackView(t.getId(), t.getNumber(), t.getTitle(), t.getLengthSeconds(),
                         credit(t.getCredits()), t.getLinks().stream().map(CatalogueService::view).toList()))
                 .toList();
-        return new AlbumView(album.getId(), album.getYear(), album.getTitle(), coverUrl(album),
+        CoverUrls cover = covers.urls(List.of(album.getId())).get(album.getId());
+        return new AlbumView(album.getId(), album.getYear(), album.getTitle(),
+                cover == null ? null : cover.large(),
+                cover == null ? null : cover.licence(),
+                cover == null ? null : cover.source(),
                 credit(album.getCredits()), trackViews,
                 album.getLinks().stream().map(CatalogueService::view).toList());
     }
@@ -133,17 +148,23 @@ public class CatalogueService {
                 .list();
         Map<Long, Album> found = albums.findAllById(albumIds).stream()
                 .collect(Collectors.toMap(Album::getId, Function.identity()));
+        Map<Long, CoverUrls> coverUrls = covers.urls(albumIds);
         List<AlbumSummary> foundAlbums = albumIds.stream()
                 .map(found::get)
                 .filter(Objects::nonNull)
-                .map(CatalogueService::summary)
+                .map(a -> summary(a, coverUrls))
                 .toList();
         return new SearchResult(foundArtists, foundAlbums);
     }
 
-    private static AlbumSummary summary(Album album) {
-        return new AlbumSummary(album.getId(), album.getYear(), album.getTitle(), coverUrl(album),
+    private static AlbumSummary summary(Album album, Map<Long, CoverUrls> coverUrls) {
+        return new AlbumSummary(album.getId(), album.getYear(), album.getTitle(), small(album, coverUrls),
                 credit(album.getCredits()));
+    }
+
+    private static String small(Album album, Map<Long, CoverUrls> coverUrls) {
+        CoverUrls urls = album == null ? null : coverUrls.get(album.getId());
+        return urls == null ? null : urls.small();
     }
 
     private static List<CreditView> credit(List<Credit> credits) {
@@ -152,13 +173,8 @@ public class CatalogueService {
                 .toList();
     }
 
-    /** Вокладак пакуль няма: яны зьявяцца разам з табліцай {@code cover} (крок 6 пляну). */
-    private static String coverUrl(Album album) {
-        return null;
-    }
-
     private static LinkView view(Link link) {
-        return new LinkView(link.getStore().getName(), link.getUrl(), link.getPriceType(), link.getMinPrice(),
+        return new LinkView(link.getId(), link.getStore().getName(), link.getUrl(), link.getPriceType(), link.getMinPrice(),
                 link.getCurrency(), link.getNote());
     }
 

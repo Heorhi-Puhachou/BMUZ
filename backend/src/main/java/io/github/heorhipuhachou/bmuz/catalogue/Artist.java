@@ -35,6 +35,17 @@ public class Artist {
         aliases.add(new ArtistAlias(this, aliasName));
     }
 
+    public void rename(String name) {
+        this.name = name;
+    }
+
+    /** Застаюцца толькі названыя псэўданімы, у тым ліку ўжо вядомыя; новыя дадаюцца. */
+    public void replaceAliases(List<String> names) {
+        aliases.removeIf(a -> !names.contains(a.getName()));
+        List<String> known = aliases.stream().map(ArtistAlias::getName).toList();
+        names.stream().filter(n -> !known.contains(n)).forEach(this::addAlias);
+    }
+
     public Long getId() {
         return id;
     }
