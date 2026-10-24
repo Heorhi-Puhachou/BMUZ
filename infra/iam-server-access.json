@@ -18,7 +18,7 @@
         {
             "Effect": "Allow",
             "Action": "secretsmanager:GetSecretValue",
-            "Resource": "arn:aws:secretsmanager:eu-north-1:899012776854:secret:rds!db-66425024-feee-4745-8212-0b5e6b279532-5dUx1W"
+            "Resource": "arn:aws:secretsmanager:eu-north-1:899012776854:secret:bmuz/db-app-??????"
         },
         {
             "Effect": "Allow",

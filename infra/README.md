@@ -3,7 +3,8 @@
 Як BMUZ працуе на AWS і якімі камандамі гэта створана. Рэгіён — `eu-north-1`
 (Стакгольм), профіль AWS CLI — `bmuz`. Усе рэсурсы маюць тэг `project=bmuz`.
 
-Гэта ручная ўстаноўка; пазьней яна стане кодам AWS CDK у гэтай тэчцы.
+Большасьць створана рукамі; ролі GitHub Actions — ужо кодам Terraform у
+`terraform/`, куды паступова пераходзіць і астатняе.
 
 ## Што працуе
 
@@ -15,7 +16,8 @@
 | Функцыя CloudFront                  | `bmuz-www-redirect`                   |
 | Сховішча вобразаў (ECR)             | `bmuz`                                |
 | База PostgreSQL 18.6 (RDS)          | `bmuz`, `db.t4g.micro`, 20 GB         |
-| Пароль базы (Secrets Manager)       | `rds!db-66425024-…`                   |
+| Пароль адміністратара базы          | `rds!db-66425024-…`                   |
+| Пароль сайта ў базе                 | `bmuz/db-app`, `bmuz_app`             |
 | Сэрвэр (EC2)                        | тэг `Name=bmuz`, `t3.micro`           |
 | Роля сэрвэра (IAM)                  | `bmuz-server`                         |
 | Вокладкі (S3)                       | `bmuz-covers-899012776854`            |
@@ -29,8 +31,10 @@
 - Сэрвэр прымае HTTP толькі ад CloudFront (сьпіс адрасоў
   `com.amazonaws.global.cloudfront.origin-facing`), база — толькі ад сэрвэра.
   Порт SSH закрыты; на сэрвэр заходзяць праз Systems Manager.
-- Пароль базы стварыў і захоўвае RDS. Сэрвэр чытае яго пры кожным запуску
-  сэрвіса і на дыск не піша.
+- Сайт заходзіць у базу як `bmuz_app`, уладальнік усіх табліц. Ягоны пароль
+  ляжыць у Secrets Manager як `bmuz/db-app` і не мяняецца сам. Сэрвэр чытае
+  яго пры кожным запуску сэрвіса і на дыск не піша. Пароль адміністратара
+  `bmuz` стварыў RDS і мяняе раз на тыдзень; сэрвэр яго не чытае.
 - Усё, акрамя `/assets/*` і `/covers/*`, CloudFront перадае сэрвэру з усімі
   мэтадамі (`POST`, `PUT`, `DELETE` — для ўваходу і зьменаў), з кукі і
   загалоўкамі, і нічога з гэтага не кэшуе.
@@ -56,6 +60,9 @@
 | `s3-covers-policy.json`  | хто можа чытаць вокладкі (толькі CloudFront)         |
 | `dns-ses.json`           | запісы DNS для SES: DKIM, `mail.bmuz.eu`, DMARC      |
 | `dns-mail.json`          | `h.puhachou@bmuz.eu` → Gmail праз Forward Email      |
+| `db-app-user.sql`        | карыстальнік сайта `bmuz_app` і ягоныя табліцы       |
+| `deploy.sh`              | выкладка вобраза на сэрвэры; яе дасылае GitHub       |
+| `terraform/`             | ролі GitHub Actions; стан — у S3                     |
 | `run_on_server.py`       | выканаць каманды на сэрвэры праз Systems Manager     |
 
 ## Як створана
@@ -78,9 +85,9 @@ aws rds create-db-instance --db-instance-identifier bmuz --engine postgres --eng
   --vpc-security-group-ids <bmuz-db> --no-publicly-accessible --no-multi-az \
   --backup-retention-period 7 --deletion-protection
 
-# Пароль мяняецца раз на год, а не раз на тыдзень (гл. «Заўвагі»)
-aws secretsmanager rotate-secret --secret-id <пароль базы> \
-  --rotation-rules AutomaticallyAfterDays=365 --no-rotate-immediately
+# Карыстальнік сайта: пароль у Secrets Manager, потым роля ў базе — з сэрвэра,
+# бо база адкрыта толькі яму (гл. «Карыстальнік сайта ў базе»)
+aws secretsmanager create-secret --name bmuz/db-app --secret-string '{"username":"bmuz_app","password":"…"}'
 
 # Сэрвэр
 aws ec2 run-instances --image-id <Amazon Linux 2023> --instance-type t3.micro \
@@ -149,6 +156,34 @@ python3 infra/run_on_server.py 'systemctl stop bmuz' \
   'systemctl start bmuz'
 ```
 
+## Выкладка
+
+`.github/workflows/deploy.yml`: кожны push у `main` запускае тэсты, кладзе
+вобраз з тэгам кароткага хэша коміту ў ECR і чакае ўхвалы ў асяродзьдзі
+`production` на GitHub. Пасьля ўхвалы GitHub праз Systems Manager выконвае на
+сэрвэры `deploy.sh`: новы вобраз, перазапуск, а калі сайт не адказвае за 6
+хвілін — ранейшы вобраз. Ключоў AWS у GitHub няма: ролі `bmuz-github-build` і
+`bmuz-github-deploy` прымаюць толькі токены гэтага рэпазыторыя.
+
+Ролі стварае Terraform; яго стан ляжыць у `bmuz-terraform-state-899012776854`
+(прыватнае, вэрсіі 90 дзён). Гэта сховішча створана рукамі, бо Terraform мае
+патрэбу ў ім яшчэ да першага запуску:
+
+```bash
+aws s3api create-bucket --bucket bmuz-terraform-state-899012776854 \
+  --create-bucket-configuration LocationConstraint=eu-north-1
+aws s3api put-public-access-block --bucket bmuz-terraform-state-899012776854 --public-access-block-configuration \
+  BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+aws s3api put-bucket-versioning --bucket bmuz-terraform-state-899012776854 --versioning-configuration Status=Enabled
+aws s3api put-bucket-lifecycle-configuration --bucket bmuz-terraform-state-899012776854 --lifecycle-configuration \
+  '{"Rules":[{"ID":"old-versions-90-days","Status":"Enabled","Filter":{},"NoncurrentVersionExpiration":{"NoncurrentDays":90}}]}'
+
+cd infra/terraform
+terraform init
+terraform plan
+terraform apply
+```
+
 ## Заўвагі
 
 - **Некаторыя каманды AWS CLI не працуюць** у пакеце `awscli` 2.31 з Ubuntu
@@ -163,6 +198,8 @@ python3 infra/run_on_server.py 'systemctl stop bmuz' \
   rds = session.Session(profile='bmuz').create_client('rds', region_name='eu-north-1')
   rds.modify_db_instance(DBInstanceIdentifier='bmuz', DeletionProtection=False, ApplyImmediately=True)"
   ```
-- **Сайт карыстаецца адміністратарам базы.** Ягоны пароль RDS мяняе сам, а сэрвіс
-  чытае пароль толькі пры запуску, таму змена спыніла б сайт. Пакуль змена — раз
-  на год; правільна — асобны карыстальнік базы для сайта з уласным паролем.
+- **Карыстальнік сайта ў базе.** `db-app-user.sql` стварае `bmuz_app` і
+  перадае яму табліцы. Выконвае яго адміністратар `bmuz` праз `psql` з
+  кантэйнэра `postgres:18-alpine` на сэрвэры; пароль `bmuz_app` скрыпт бярэ
+  са зьменнай `APP_PW`. Сайт чытае пароль толькі пры запуску, таму пароль,
+  які мяняўся б сам, спыняў бы сайт.

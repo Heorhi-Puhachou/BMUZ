@@ -1,0 +1,112 @@
+# Кожны push у main: тэсты, вобраз у ECR, потым выкладка на сэрвэр пасьля ўхвалы
+# ў асяродзьдзі production. Ролі AWS створаны ў infra/terraform/github.tf.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Адна выкладка за раз; новы push чакае, а не перапыняе ранейшы.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: eu-north-1
+  ACCOUNT: "899012776854"
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Backend tests
+        working-directory: backend
+        run: ./mvnw -B -q test
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Frontend lint and build
+        working-directory: frontend
+        run: |
+          npm ci --no-fund --no-audit
+          npm run lint
+          npm run build
+
+  image:
+    needs: test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: tag
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::${{ env.ACCOUNT }}:role/bmuz-github-build
+          aws-region: ${{ env.AWS_REGION }}
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+      - name: Build and push
+        env:
+          IMAGE: ${{ steps.ecr.outputs.registry }}/bmuz:${{ steps.tag.outputs.tag }}
+        run: |
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+
+  deploy:
+    needs: image
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::${{ env.ACCOUNT }}:role/bmuz-github-deploy
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Deploy to the server
+        env:
+          TAG: ${{ needs.image.outputs.tag }}
+        run: |
+          INSTANCE=$(aws ec2 describe-instances \
+            --filters Name=tag:Name,Values=bmuz Name=instance-state-name,Values=running \
+            --query 'Reservations[].Instances[].InstanceId' --output text)
+          [ "$(wc -w <<< "$INSTANCE")" = 1 ] || { echo "expected one server, got: $INSTANCE"; exit 1; }
+          jq -n --arg tag "$TAG" --rawfile script infra/deploy.sh \
+            '{commands: ["TAG=" + $tag, $script], executionTimeout: ["900"]}' > params.json
+          ID=$(aws ssm send-command --instance-ids "$INSTANCE" --document-name AWS-RunShellScript \
+            --comment "deploy $TAG" --parameters file://params.json --query Command.CommandId --output text)
+          while :; do
+            sleep 10
+            STATUS=$(aws ssm get-command-invocation --command-id "$ID" --instance-id "$INSTANCE" \
+              --query Status --output text 2>/dev/null || echo Pending)
+            case "$STATUS" in Pending|InProgress|Delayed) ;; *) break ;; esac
+          done
+          aws ssm get-command-invocation --command-id "$ID" --instance-id "$INSTANCE" \
+            --query '[StandardOutputContent,StandardErrorContent]' --output text
+          [ "$STATUS" = Success ]
+      - name: Check through CloudFront
+        run: |
+          for path in / /about /api/auth/me; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://bmuz.eu$path")
+            echo "$path $code"
+            case "$path:$code" in /api/auth/me:204|/:200|/about:200) ;; *) exit 1 ;; esac
+          done
