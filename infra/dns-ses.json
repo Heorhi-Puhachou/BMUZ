@@ -1,0 +1,83 @@
+{
+    "Comment": "SES: DKIM, MAIL FROM mail.bmuz.eu, DMARC",
+    "Changes": [
+        {
+            "Action": "CREATE",
+            "ResourceRecordSet": {
+                "Name": "6dciobl6mpr72fhtoaursqtihrhtlia6._domainkey.bmuz.eu",
+                "Type": "CNAME",
+                "TTL": 1800,
+                "ResourceRecords": [
+                    {
+                        "Value": "6dciobl6mpr72fhtoaursqtihrhtlia6.dkim.amazonses.com"
+                    }
+                ]
+            }
+        },
+        {
+            "Action": "CREATE",
+            "ResourceRecordSet": {
+                "Name": "dajgftstlkedteqmvdvykf4sjurjwruy._domainkey.bmuz.eu",
+                "Type": "CNAME",
+                "TTL": 1800,
+                "ResourceRecords": [
+                    {
+                        "Value": "dajgftstlkedteqmvdvykf4sjurjwruy.dkim.amazonses.com"
+                    }
+                ]
+            }
+        },
+        {
+            "Action": "CREATE",
+            "ResourceRecordSet": {
+                "Name": "r3h2sgtr6ibk3bhrcvdtfkxuzikqjb6n._domainkey.bmuz.eu",
+                "Type": "CNAME",
+                "TTL": 1800,
+                "ResourceRecords": [
+                    {
+                        "Value": "r3h2sgtr6ibk3bhrcvdtfkxuzikqjb6n.dkim.amazonses.com"
+                    }
+                ]
+            }
+        },
+        {
+            "Action": "CREATE",
+            "ResourceRecordSet": {
+                "Name": "mail.bmuz.eu",
+                "Type": "MX",
+                "TTL": 1800,
+                "ResourceRecords": [
+                    {
+                        "Value": "10 feedback-smtp.eu-north-1.amazonses.com"
+                    }
+                ]
+            }
+        },
+        {
+            "Action": "CREATE",
+            "ResourceRecordSet": {
+                "Name": "mail.bmuz.eu",
+                "Type": "TXT",
+                "TTL": 1800,
+                "ResourceRecords": [
+                    {
+                        "Value": "\"v=spf1 include:amazonses.com ~all\""
+                    }
+                ]
+            }
+        },
+        {
+            "Action": "CREATE",
+            "ResourceRecordSet": {
+                "Name": "_dmarc.bmuz.eu",
+                "Type": "TXT",
+                "TTL": 1800,
+                "ResourceRecords": [
+                    {
+                        "Value": "\"v=DMARC1; p=quarantine; adkim=s; aspf=r\""
+                    }
+                ]
+            }
+        }
+    ]
+}

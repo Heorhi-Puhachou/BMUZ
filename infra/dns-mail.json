@@ -1,0 +1,28 @@
+{
+    "Comment": "Mail to h.puhachou@ and admin@bmuz.eu forwarded to Gmail by Forward Email (free plan)",
+    "Changes": [
+        {
+            "Action": "CREATE",
+            "ResourceRecordSet": {
+                "Name": "bmuz.eu",
+                "Type": "MX",
+                "TTL": 3600,
+                "ResourceRecords": [
+                    {"Value": "0 mx1.forwardemail.net"},
+                    {"Value": "0 mx2.forwardemail.net"}
+                ]
+            }
+        },
+        {
+            "Action": "CREATE",
+            "ResourceRecordSet": {
+                "Name": "bmuz.eu",
+                "Type": "TXT",
+                "TTL": 3600,
+                "ResourceRecords": [
+                    {"Value": "\"forward-email=h.puhachou:h.puhachou@gmail.com,admin:h.puhachou+bmuz-admin@gmail.com\""}
+                ]
+            }
+        }
+    ]
+}

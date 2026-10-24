@@ -18,6 +18,9 @@
 | Пароль базы (Secrets Manager)       | `rds!db-66425024-…`                   |
 | Сэрвэр (EC2)                        | тэг `Name=bmuz`, `t3.micro`           |
 | Роля сэрвэра (IAM)                  | `bmuz-server`                         |
+| Вокладкі (S3)                       | `bmuz-covers-899012776854`            |
+| Доступ CloudFront да вокладак (OAC) | `bmuz-covers`, `E15OL0EQ71QGKQ`       |
+| Адпраўка лістоў (SES)               | `bmuz.eu`, адпраўнік `no-reply@`      |
 | Правілы доступу (security groups)   | `bmuz-app`, `bmuz-db`                 |
 
 Адрас сайта: https://bmuz.eu — `www.bmuz.eu` перакідвае туды, а
@@ -28,6 +31,16 @@
   Порт SSH закрыты; на сэрвэр заходзяць праз Systems Manager.
 - Пароль базы стварыў і захоўвае RDS. Сэрвэр чытае яго пры кожным запуску
   сэрвіса і на дыск не піша.
+- Усё, акрамя `/assets/*` і `/covers/*`, CloudFront перадае сэрвэру з усімі
+  мэтадамі (`POST`, `PUT`, `DELETE` — для ўваходу і зьменаў), з кукі і
+  загалоўкамі, і нічога з гэтага не кэшуе.
+- Вокладкі ляжаць у прыватным S3: чытае іх толькі CloudFront па `/covers/*`,
+  а сэрвэр можа толькі пакласьці або выдаліць файл у `covers/`. Ранейшыя
+  вэрсіі файлаў S3 захоўвае 30 дзён, потым выдаляе.
+- Лісты сайт адпраўляе праз SES як `no-reply@bmuz.eu`, падпісаныя DKIM; зваротны
+  адрас для адмоваў — `mail.bmuz.eu`, правіла DMARC — `p=quarantine`. Роля
+  сэрвэра можа адпраўляць толькі з гэтага адраса. SES яшчэ ў тэставым рэжыме:
+  дастаўляе толькі на адрасы, пацьверджаныя ў SES.
 - Сэртыфікат AWS падаўжае сам, пакуль у DNS ёсьць запісы праверкі
   (`_…bmuz.eu`, `_…www.bmuz.eu`).
 
@@ -39,7 +52,10 @@
 | `cloudfront.json`        | канфігурацыя CloudFront, як яна ёсьць                |
 | `www-redirect.js`        | функцыя CloudFront: `www.bmuz.eu` → `bmuz.eu`        |
 | `iam-server-trust.json`  | хто можа ўзяць ролю `bmuz-server` (толькі EC2)       |
-| `iam-server-access.json` | што можа роля: адзін вобраз, адзін пароль            |
+| `iam-server-access.json` | што можа роля: адзін вобраз, адзін пароль, вокладкі  |
+| `s3-covers-policy.json`  | хто можа чытаць вокладкі (толькі CloudFront)         |
+| `dns-ses.json`           | запісы DNS для SES: DKIM, `mail.bmuz.eu`, DMARC      |
+| `dns-mail.json`          | `h.puhachou@bmuz.eu` → Gmail праз Forward Email      |
 | `run_on_server.py`       | выканаць каманды на сэрвэры праз Systems Manager     |
 
 ## Як створана
@@ -89,6 +105,33 @@ aws cloudfront publish-function --name bmuz-www-redirect --if-match <ETag>
 
 # CloudFront з дамэнам, сэртыфікатам і функцыяй
 aws cloudfront create-distribution --distribution-config file://infra/cloudfront.json
+
+# Вокладкі: прыватнае сховішча, ранейшыя вэрсіі — 30 дзён
+aws s3api create-bucket --bucket bmuz-covers-899012776854 \
+  --create-bucket-configuration LocationConstraint=eu-north-1
+aws s3api put-public-access-block --bucket bmuz-covers-899012776854 --public-access-block-configuration \
+  BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+aws s3api put-bucket-versioning --bucket bmuz-covers-899012776854 --versioning-configuration Status=Enabled
+aws s3api put-bucket-tagging --bucket bmuz-covers-899012776854 --tagging 'TagSet=[{Key=project,Value=bmuz}]'
+aws s3api put-bucket-lifecycle-configuration --bucket bmuz-covers-899012776854 --lifecycle-configuration \
+  '{"Rules":[{"ID":"old-versions-30-days","Status":"Enabled","Filter":{},
+    "NoncurrentVersionExpiration":{"NoncurrentDays":30},"Expiration":{"ExpiredObjectDeleteMarker":true},
+    "AbortIncompleteMultipartUpload":{"DaysAfterInitiation":7}}]}'
+aws cloudfront create-origin-access-control --origin-access-control-config \
+  '{"Name":"bmuz-covers","SigningProtocol":"sigv4","SigningBehavior":"always","OriginAccessControlOriginType":"s3"}'
+aws s3api put-bucket-policy --bucket bmuz-covers-899012776854 --policy file://infra/s3-covers-policy.json
+aws iam put-role-policy --role-name bmuz-server --policy-name bmuz-server-access \
+  --policy-document file://infra/iam-server-access.json
+# CloudFront: паходжаньне bmuz-covers і /covers/* — у cloudfront.json
+aws cloudfront update-distribution --id E2MKAS13NWHFNZ --if-match <ETag> \
+  --distribution-config file://infra/cloudfront.json
+
+# Лісты: дамэн у SES з DKIM і зваротным адрасам mail.bmuz.eu
+aws sesv2 create-email-identity --email-identity bmuz.eu --tags Key=project,Value=bmuz
+aws sesv2 put-email-identity-mail-from-attributes --email-identity bmuz.eu \
+  --mail-from-domain mail.bmuz.eu --behavior-on-mx-failure USE_DEFAULT_VALUE
+# тры токены DKIM з выніку першай каманды — у dns-ses.json, потым:
+aws route53 change-resource-record-sets --hosted-zone-id Z01058652SZMDHTGQ7WL5 --change-batch file://infra/dns-ses.json
 
 # Запісы A і AAAA для bmuz.eu і www.bmuz.eu — псэўданімы на CloudFront
 # (HostedZoneId CloudFront — заўсёды Z2FDTNDATAQYW2)

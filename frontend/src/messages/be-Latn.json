@@ -68,15 +68,9 @@
   "about": {
     "link": "Pra sajt i kantakt",
     "heading": "Pra sajt",
-    "what": "Kataloh biełaruskaj muzyki, jakuju možna spampavać lehalna. Sajt nie zachoŭvaje muzyku: jon tolki spasyłajecca na staronki, jakija vybrali sami vykanaŭcy abo ichnyja lejbły.",
+    "what": "Kataloh biełaruskaj muzyki, jakuju možna spampavać lehalna. Sajt nie zachoŭvaje muzyku (pakul što): jon tolki spasyłajecca na staronki, jakija vybrali sami vykanaŭcy abo ichnyja lejbły.",
     "contactHeading": "Kantakt",
-    "contact": "Kali spasyłka nie pracuje, viadzie nie tudy abo parušaje čyje-niebudź pravy, napišycie na {{email}} — jaje vypraviać abo vydalać.",
-    "sourceHeading": "Zychodny kod",
-    "source": "Kod sajta adkryty: {{link}}, licenzija MIT.",
-    "privacyHeading": "Pryvatnaść",
-    "privacy1": "Sajt nie stavić kuki i nie viadzie žurnału naviedvańniaŭ.",
-    "privacy2": "Kab dastavić staronku, servery Amazon Web Services (AWS) apracoŭvajuć vaš IP-adras. Padstava — zakonny intares u tym, kab sajt pracavaŭ (art. 6 č. 1 p. f GDPR). Sajt pracuje ŭ rehijonie AWS u Stakholmie, Švecyja; kali AWS pieradaje źviestki pa-za Eŭrapiejski Źviaz, to tolki pavodle typavych dahavornych umovaŭ EZ. Sam sajt hetych źviestak nie zachoŭvaje.",
-    "privacy3": "Adkazny za źviestki: Heorhi Puhachou, {{email}}. Vy majecie prava na dostup da svaich źviestak, na ich vypraŭleńnie i vydaleńnie, na abmiežavańnie apracoŭki i piarečańnie suprać jaje, a taksama prava padać skarhu ŭ nahladny orhan — Prezes Urzędu Ochrony Danych Osobowych (UODO) u Polščy."
+    "contact": "Kali spasyłka nie pracuje, viadzie nie tudy abo parušaje čyje-niebudź pravy, napišycie na {{email}} — jaje vypraviać abo vydalać."
   },
   "account": {
     "loginHeading": "Uvachod",

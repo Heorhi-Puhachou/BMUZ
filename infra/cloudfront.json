@@ -9,7 +9,7 @@
     },
     "DefaultRootObject": "",
     "Origins": {
-        "Quantity": 1,
+        "Quantity": 2,
         "Items": [
             {
                 "Id": "bmuz-server",
@@ -37,6 +37,24 @@
                     "Enabled": false
                 },
                 "OriginAccessControlId": ""
+            },
+            {
+                "Id": "bmuz-covers",
+                "DomainName": "bmuz-covers-899012776854.s3.eu-north-1.amazonaws.com",
+                "OriginPath": "",
+                "CustomHeaders": {
+                    "Quantity": 0
+                },
+                "S3OriginConfig": {
+                    "OriginAccessIdentity": "",
+                    "OriginReadTimeout": 30
+                },
+                "ConnectionAttempts": 3,
+                "ConnectionTimeout": 10,
+                "OriginShield": {
+                    "Enabled": false
+                },
+                "OriginAccessControlId": "E15OL0EQ71QGKQ"
             }
         ]
     },
@@ -55,10 +73,15 @@
         },
         "ViewerProtocolPolicy": "redirect-to-https",
         "AllowedMethods": {
-            "Quantity": 2,
+            "Quantity": 7,
             "Items": [
                 "HEAD",
-                "GET"
+                "DELETE",
+                "POST",
+                "GET",
+                "OPTIONS",
+                "PUT",
+                "PATCH"
             ],
             "CachedMethods": {
                 "Quantity": 2,
@@ -90,11 +113,57 @@
         }
     },
     "CacheBehaviors": {
-        "Quantity": 1,
+        "Quantity": 2,
         "Items": [
             {
                 "PathPattern": "/assets/*",
                 "TargetOriginId": "bmuz-server",
+                "TrustedSigners": {
+                    "Enabled": false,
+                    "Quantity": 0
+                },
+                "TrustedKeyGroups": {
+                    "Enabled": false,
+                    "Quantity": 0
+                },
+                "ViewerProtocolPolicy": "redirect-to-https",
+                "AllowedMethods": {
+                    "Quantity": 2,
+                    "Items": [
+                        "HEAD",
+                        "GET"
+                    ],
+                    "CachedMethods": {
+                        "Quantity": 2,
+                        "Items": [
+                            "HEAD",
+                            "GET"
+                        ]
+                    }
+                },
+                "SmoothStreaming": false,
+                "Compress": true,
+                "LambdaFunctionAssociations": {
+                    "Quantity": 0
+                },
+                "FunctionAssociations": {
+                    "Quantity": 1,
+                    "Items": [
+                        {
+                            "FunctionARN": "arn:aws:cloudfront::899012776854:function/bmuz-www-redirect",
+                            "EventType": "viewer-request"
+                        }
+                    ]
+                },
+                "FieldLevelEncryptionId": "",
+                "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+                "GrpcConfig": {
+                    "Enabled": false
+                }
+            },
+            {
+                "PathPattern": "/covers/*",
+                "TargetOriginId": "bmuz-covers",
                 "TrustedSigners": {
                     "Enabled": false,
                     "Quantity": 0

@@ -21,6 +21,9 @@ REGISTRY=899012776854.dkr.ecr.eu-north-1.amazonaws.com
 IMAGE=899012776854.dkr.ecr.eu-north-1.amazonaws.com/bmuz:0efb5df
 DB_HOST=bmuz.cbas4a8c0z88.eu-north-1.rds.amazonaws.com
 SECRET_ID=arn:aws:secretsmanager:eu-north-1:899012776854:secret:rds!db-66425024-feee-4745-8212-0b5e6b279532-5dUx1W
+COVERS_BUCKET=bmuz-covers-899012776854
+MAIL_FROM=no-reply@bmuz.eu
+SITE_URL=https://bmuz.eu
 EOF
 
 cat > /opt/bmuz/start.sh <<'EOF'
@@ -37,10 +40,14 @@ export SPRING_DATASOURCE_USERNAME=$(printf '%s' "$SECRET" | python3 -c 'import j
 export SPRING_DATASOURCE_PASSWORD=$(printf '%s' "$SECRET" | python3 -c 'import json,sys; print(json.load(sys.stdin)["password"])')
 export SPRING_DATASOURCE_URL="jdbc:postgresql://${DB_HOST}:5432/bmuz?sslmode=require"
 unset SECRET
+# Вокладкі ў S3 і лісты праз SES; правы на іх праграма ў кантэйнеры бярэ з ролі сэрвэра.
+export BMUZ_COVERS_BUCKET="$COVERS_BUCKET" BMUZ_MAIL_FROM="$MAIL_FROM" BMUZ_SITE_URL="$SITE_URL" \
+  AWS_REGION="$REGION"
 
 docker rm -f bmuz >/dev/null 2>&1 || true
 exec docker run --name bmuz -p 80:8080 \
   -e SPRING_DATASOURCE_URL -e SPRING_DATASOURCE_USERNAME -e SPRING_DATASOURCE_PASSWORD \
+  -e BMUZ_COVERS_BUCKET -e BMUZ_MAIL_FROM -e BMUZ_SITE_URL -e AWS_REGION \
   -e JAVA_TOOL_OPTIONS="-Xmx384m" \
   "$IMAGE" "$@"
 EOF
