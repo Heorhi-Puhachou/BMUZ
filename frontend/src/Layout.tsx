@@ -2,12 +2,12 @@ import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useNavigate, useSearchParams } from 'react-router'
 import { isAdmin, send, useAuth } from './auth'
-import { useFreeOnly } from './freeOnly'
 import { SPELLINGS } from './i18n'
+import { useListFilter } from './listFilter'
 
 export default function Layout() {
   const { t, i18n } = useTranslation()
-  const { freeOnly, setFreeOnly } = useFreeOnly()
+  const filter = useListFilter()
   const { me, setMe, registration } = useAuth()
   const navigate = useNavigate()
 
@@ -60,6 +60,7 @@ export default function Layout() {
                   )}
                   {isAdmin(me) && (
                     <>
+                      <Link to="/checks">{t('checks.heading')}</Link> ·{' '}
                       <Link to="/edits">{t('edits.heading')}</Link> ·{' '}
                     </>
                   )}
@@ -83,8 +84,8 @@ export default function Layout() {
           <Link to="/" className="site-title">{t('site.title')}</Link>
           <p className="tagline">{t('site.tagline')}</p>
           <label className="free-only">
-            <input type="checkbox" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} />
-            {t('filter.freeOnly')}
+            <input type="checkbox" checked={filter.on} onChange={(e) => filter.setOn(e.target.checked)} />
+            {t(filter.kind === 'unchecked' ? 'filter.unchecked' : 'filter.freeOnly')}
           </label>
           <form className="search" role="search" onSubmit={search}>
             <input

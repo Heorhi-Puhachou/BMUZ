@@ -9,7 +9,8 @@
     "search": "Šukać"
   },
   "filter": {
-    "freeOnly": "Pakazvać tolki biaspłatnaje"
+    "freeOnly": "Pakazvać tolki biaspłatnaje",
+    "unchecked": "Pakazvać niepravieranyja"
   },
   "common": {
     "loading": "Zahruzka…",
@@ -200,5 +201,16 @@
       "COVER_UPLOAD": "vokładka zahružanaja",
       "COVER_REMOVE": "vokładka vydalenaja"
     }
+  },
+  "checks": {
+    "heading": "Prahlad",
+    "hint": "Albomy, jakich vy jašče nie prahladzieli, i tyja, što źmianili paśla vašaha prahladu — jany pieršyja.",
+    "none": "Usie albomy prahladzienyja.",
+    "changed": "źmienieny paśla vašaha prahladu {{date}}",
+    "mine": "Prahladzieny mnoj",
+    "changedSince": "Albom źmianili paśla vašaha prahladu {{date}}.",
+    "others": "Prahladali taksama:",
+    "otherChanged": "źmienieny paśla",
+    "albumMark": "Vy nie prahladzieli hety albom"
   }
 }

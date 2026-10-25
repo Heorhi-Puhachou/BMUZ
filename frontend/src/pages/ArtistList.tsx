@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router'
 import { type ArtistTile, type Page, useApi } from '../api'
 import Cover from '../Cover'
-import { useFreeOnly, withFree } from '../freeOnly'
+import { useListFilter, withFilter } from '../listFilter'
 import Status from '../Status'
 import { useTitle } from '../useTitle'
 
@@ -13,8 +13,8 @@ export default function ArtistList() {
   const { t } = useTranslation()
   const [params] = useSearchParams()
   const page = Math.max(0, Number(params.get('page') ?? 0) || 0)
-  const { freeOnly } = useFreeOnly()
-  const loaded = useApi<Page<ArtistTile>>(withFree(`/api/artists?page=${page}&size=${PAGE_SIZE}`, freeOnly))
+  const filter = useListFilter()
+  const loaded = useApi<Page<ArtistTile>>(withFilter(`/api/artists?page=${page}&size=${PAGE_SIZE}`, filter))
   useTitle(undefined)
 
   if (loaded.state !== 'ok') {

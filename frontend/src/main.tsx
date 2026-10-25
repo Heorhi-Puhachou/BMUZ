@@ -2,15 +2,16 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from 'react-router'
 import AuthProvider from './AuthProvider'
-import FreeOnlyProvider from './FreeOnlyProvider'
 import './i18n'
 import './index.css'
 import Layout from './Layout'
+import ListFilterProvider from './ListFilterProvider'
 import AboutPage from './pages/AboutPage'
 import AccountPage from './pages/AccountPage'
 import AlbumPage from './pages/AlbumPage'
 import ArtistList from './pages/ArtistList'
 import ArtistPage from './pages/ArtistPage'
+import ChecksPage from './pages/ChecksPage'
 import ConfirmPage from './pages/ConfirmPage'
 import EditsPage from './pages/EditsPage'
 import EmailPage from './pages/EmailPage'
@@ -26,7 +27,7 @@ import TeamPage from './pages/TeamPage'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <FreeOnlyProvider>
+      <ListFilterProvider>
         <BrowserRouter>
           <Routes>
             <Route element={<Layout />}>
@@ -46,11 +47,12 @@ createRoot(document.getElementById('root')!).render(
               <Route path="invite" element={<InvitePage />} />
               <Route path="edits" element={<EditsPage />} />
               <Route path="team" element={<TeamPage />} />
+              <Route path="checks" element={<ChecksPage />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
         </BrowserRouter>
-      </FreeOnlyProvider>
+      </ListFilterProvider>
     </AuthProvider>
   </StrictMode>,
 )

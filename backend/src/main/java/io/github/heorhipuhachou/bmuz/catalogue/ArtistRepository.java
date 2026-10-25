@@ -16,8 +16,9 @@ public interface ArtistRepository extends JpaRepository<Artist, Long> {
     @Query("SELECT ar.id FROM Artist ar ORDER BY ar.id")
     List<Long> findAllIds();
 
-    /** Выканаўцы, у якіх ёсьць хоць адзін бясплатны альбом. */
+    /** Выканаўцы, у якіх ёсьць хоць адзін альбом, што праходзіць фільтр. */
     @Query("SELECT ar FROM Artist ar WHERE EXISTS (SELECT a.id FROM Album a JOIN a.credits c WHERE c.artist = ar AND "
-            + FreeFilter.ALBUM_A + ")")
-    Page<Artist> findWithFreeAlbum(boolean freeOnly, Collection<PriceType> freeTypes, Pageable pageable);
+            + ListFilter.ALBUM_A + ")")
+    Page<Artist> findWithFilteredAlbum(boolean freeOnly, Collection<PriceType> freeTypes, long uncheckedBy,
+                                       Pageable pageable);
 }

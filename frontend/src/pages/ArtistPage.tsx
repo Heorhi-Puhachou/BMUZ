@@ -7,8 +7,9 @@ import ArtistMembers from '../ArtistMembers'
 import { canEdit, useAuth } from '../auth'
 import Cover from '../Cover'
 import Credit from '../Credit'
-import { useFreeOnly, withFree } from '../freeOnly'
+import { useListFilter, withFilter } from '../listFilter'
 import Status from '../Status'
+import { useUnchecked } from '../unchecked'
 import { useTitle } from '../useTitle'
 
 // Калі альбом супольны, пад назвай відаць усе выканаўцы.
@@ -19,10 +20,11 @@ function others(album: AlbumSummary) {
 export default function ArtistPage() {
   const { t } = useTranslation()
   const { id } = useParams()
-  const { freeOnly } = useFreeOnly()
+  const filter = useListFilter()
   const { me } = useAuth()
   const [reload, setReload] = useState(0)
-  const loaded = useApi<Artist>(withFree(`/api/artists/${id}`, freeOnly), reload)
+  const loaded = useApi<Artist>(withFilter(`/api/artists/${id}`, filter), reload)
+  const unchecked = useUnchecked()
   useTitle(loaded.state === 'ok' ? loaded.data.name : undefined)
 
   if (loaded.state !== 'ok') {
@@ -47,7 +49,11 @@ export default function ArtistPage() {
             {artist.albums.map((album) => (
               <li key={album.id} className="tile">
                 <Link to={`/albums/${album.id}`} className="tile-link">
-                  <Cover url={album.coverUrl} title={album.title} />
+                  <Cover
+                    url={album.coverUrl}
+                    title={album.title}
+                    mark={unchecked.has(album.id) ? t('checks.albumMark') : undefined}
+                  />
                   <span className="tile-name">{album.title}</span>
                 </Link>
                 {others(album) && (

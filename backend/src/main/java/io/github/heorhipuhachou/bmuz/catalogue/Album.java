@@ -2,6 +2,7 @@ package io.github.heorhipuhachou.bmuz.catalogue;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,6 +13,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.OrderColumn;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +27,10 @@ public class Album {
     private int year;
 
     private String title;
+
+    /** Ставіць база і праўка каталёга радком SQL; тут — толькі для чытаньня. */
+    @Column(insertable = false, updatable = false)
+    private Instant updatedAt;
 
     @ElementCollection
     @CollectionTable(name = "album_credit", joinColumns = @JoinColumn(name = "album_id"))

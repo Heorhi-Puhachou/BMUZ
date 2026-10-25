@@ -4,6 +4,7 @@ import io.github.heorhipuhachou.bmuz.catalogue.CatalogueService;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.AlbumView;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.ArtistView;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.CreditView;
+import io.github.heorhipuhachou.bmuz.catalogue.ListFilter;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -61,7 +62,7 @@ class PageController {
 
     /** Старонкі ўліковага запісу. Іх адкрываюць наўпрост — у тым ліку спасылкай з ліста, — таму сэрвэр мусіць іх аддаваць. */
     @GetMapping(value = {"/login", "/admin", "/register", "/confirm", "/forgot", "/reset", "/invite", "/edits", "/team",
-            "/account", "/email"},
+            "/checks", "/account", "/email"},
             produces = MediaType.TEXT_HTML_VALUE)
     ResponseEntity<String> account() {
         return page(HttpStatus.OK, SITE, SITE_DESCRIPTION);
@@ -71,7 +72,7 @@ class PageController {
     ResponseEntity<String> artist(@PathVariable long id) {
         ArtistView artist;
         try {
-            artist = catalogue.artist(id, false);
+            artist = catalogue.artist(id, ListFilter.NONE);
         } catch (ResponseStatusException e) {
             return page(HttpStatus.NOT_FOUND, SITE, SITE_DESCRIPTION);
         }

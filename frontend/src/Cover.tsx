@@ -14,13 +14,22 @@ function firstLetter(text: string) {
   return (letter ?? '·').toLocaleUpperCase('be')
 }
 
-export default function Cover({ url, title }: { url: string | null; title: string }) {
-  if (url) {
-    return <img className="cover" src={url} alt="" loading="lazy" />
-  }
-  return (
+/** mark — чырвоны прастакутнік у левым верхнім куце для адміністратара; тэкст — ягоная падказка. */
+export default function Cover({ url, title, mark }: { url: string | null; title: string; mark?: string }) {
+  const cover = url ? (
+    <img className="cover" src={url} alt="" loading="lazy" />
+  ) : (
     <div className="cover stub" style={{ '--hue': hue(title) } as React.CSSProperties} aria-hidden="true">
       {firstLetter(title)}
     </div>
+  )
+  if (!mark) {
+    return cover
+  }
+  return (
+    <span className="cover-wrap">
+      {cover}
+      <span className="cover-mark" role="img" aria-label={mark} title={mark} />
+    </span>
   )
 }

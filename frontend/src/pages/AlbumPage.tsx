@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router'
 import { type Album, creditText, useApi } from '../api'
+import AlbumCheck from '../AlbumCheck'
 import AlbumEditor from '../AlbumEditor'
 import ArtistCover from '../ArtistCover'
 import { canEdit, isAdmin, useAuth } from '../auth'
@@ -60,6 +61,7 @@ export default function AlbumPage() {
         </div>
       </div>
 
+      {isAdmin(me) && <AlbumCheck albumId={album.id} reload={reload} />}
       {isAdmin(me) && <CoverAdmin album={album} onChange={() => setReload((r) => r + 1)} />}
       {!isAdmin(me) && canEdit(me, album.credit.map((c) => c.artistId)) && (
         <ArtistCover album={album} onChange={() => setReload((r) => r + 1)} />

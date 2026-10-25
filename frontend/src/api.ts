@@ -28,6 +28,11 @@ export function creditText(credit: CreditEntry[]) {
   return credit.map((entry) => entry.name + entry.joinPhrase).join('')
 }
 
+/** Час з сэрвэра (UTC) да хвіліны: 2026-10-25 14:03. */
+export function shortTime(instant: string) {
+  return instant.slice(0, 16).replace('T', ' ')
+}
+
 export interface AlbumSummary {
   id: number
   year: number
