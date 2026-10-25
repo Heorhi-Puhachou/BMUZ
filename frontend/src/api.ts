@@ -130,8 +130,12 @@ export type Loaded<T> =
   | { state: 'notFound' }
   | { state: 'ok'; data: T }
 
-/** `reload` — лічыльнік: калі ён мяняецца, дадзеныя загружаюцца нанова (напрыклад, пасьля загрузкі вокладкі). */
-export function useApi<T>(path: string, reload = 0): Loaded<T> {
+/**
+ * `reload` — лічыльнік: калі ён мяняецца, дадзеныя загружаюцца нанова (напрыклад, пасьля загрузкі вокладкі).
+ * `keep` — пакуль ідуць новыя дадзеныя, аддаваць ранейшыя, каб старонка не скакала (напрыклад, пры пераходзе на
+ * наступную старонку сьпісу).
+ */
+export function useApi<T>(path: string, reload = 0, keep = false): Loaded<T> {
   const [result, setResult] = useState<{ path: string; reload: number; loaded: Loaded<T> } | null>(null)
 
   useEffect(() => {
@@ -155,5 +159,8 @@ export function useApi<T>(path: string, reload = 0): Loaded<T> {
     return () => controller.abort()
   }, [path, reload])
 
-  return result?.path === path && result.reload === reload ? result.loaded : { state: 'loading' }
+  if (result?.path === path && result.reload === reload) {
+    return result.loaded
+  }
+  return keep && result?.loaded.state === 'ok' ? result.loaded : { state: 'loading' }
 }

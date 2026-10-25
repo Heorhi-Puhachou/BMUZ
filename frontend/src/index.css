@@ -253,10 +253,15 @@ a {
 }
 
 .pager {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   gap: 1rem;
   align-items: center;
   margin: 1.5rem 0;
+}
+
+.pager > :first-child {
+  justify-self: end;
 }
 
 .links {

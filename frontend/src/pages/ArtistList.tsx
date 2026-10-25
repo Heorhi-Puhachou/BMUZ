@@ -1,7 +1,9 @@
+import { useLayoutEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router'
 import { type ArtistTile, type Page, useApi } from '../api'
 import Cover from '../Cover'
+import Pager from '../Pager'
 import { useListFilter, withFilter } from '../listFilter'
 import RatingSquares from '../RatingSquares'
 import Status from '../Status'
@@ -15,8 +17,18 @@ export default function ArtistList() {
   const [params] = useSearchParams()
   const page = Math.max(0, Number(params.get('page') ?? 0) || 0)
   const filter = useListFilter()
-  const loaded = useApi<Page<ArtistTile>>(withFilter(`/api/artists?page=${page}&size=${PAGE_SIZE}`, filter))
+  const loaded = useApi<Page<ArtistTile>>(withFilter(`/api/artists?page=${page}&size=${PAGE_SIZE}`, filter), 0, true)
   useTitle(undefined)
+
+  // Пасьля пераходу ніжнім радком старонак ён застаецца пад курсорам: новая старонка можа быць іншай вышыні.
+  const anchor = useRef<{ pager: HTMLElement; top: number } | null>(null)
+  useLayoutEffect(() => {
+    const kept = anchor.current
+    if (kept && loaded.state === 'ok') {
+      anchor.current = null
+      window.scrollBy(0, kept.pager.getBoundingClientRect().top - kept.top)
+    }
+  }, [loaded])
 
   if (loaded.state !== 'ok') {
     return <Status loaded={loaded} />
@@ -27,6 +39,7 @@ export default function ArtistList() {
   return (
     <>
       <h1>{t('nav.artists')}</h1>
+      <Pager path="/" page={page} pages={pages} />
       <ul className="tiles">
         {items.map((artist) => (
           <li key={artist.id}>
@@ -38,11 +51,12 @@ export default function ArtistList() {
           </li>
         ))}
       </ul>
-      <nav className="pager">
-        {page > 0 && <Link to={`/?page=${page - 1}`}>{t('artists.prev')}</Link>}
-        <span className="muted">{t('artists.page', { page: page + 1, pages })}</span>
-        {page + 1 < pages && <Link to={`/?page=${page + 1}`}>{t('artists.next')}</Link>}
-      </nav>
+      <Pager
+        path="/"
+        page={page}
+        pages={pages}
+        onNavigate={(pager) => (anchor.current = { pager, top: pager.getBoundingClientRect().top })}
+      />
     </>
   )
 }

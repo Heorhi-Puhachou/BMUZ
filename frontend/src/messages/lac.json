@@ -17,10 +17,13 @@
     "error": "Nie atrymałasia zahruzić dadzienyja.",
     "notFound": "Takoj staronki niama."
   },
-  "artists": {
-    "page": "Staronka {{page}} z {{pages}}",
-    "prev": "← Papiaredniaja",
-    "next": "Nastupnaja →"
+  "pager": {
+    "label": "Staronki",
+    "page": "{{page}}/{{pages}}",
+    "prev": "← ← ←",
+    "prevLabel": "Papiaredniaja staronka",
+    "next": "→ → →",
+    "nextLabel": "Nastupnaja staronka"
   },
   "artist": {
     "aliases": "Inšyja nazvy: {{names}}",

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router'
 import { type CreditEntry, type Page, shortTime, useApi } from '../api'
 import { isAdmin, useAuth } from '../auth'
 import Credit from '../Credit'
+import Pager from '../Pager'
 import NotFound from './NotFound'
 import Status from '../Status'
 import { useTitle } from '../useTitle'
@@ -44,6 +45,7 @@ function Checks() {
       <h1>{t('checks.heading')}</h1>
       <p className="muted">{t('checks.hint')}</p>
       {total === 0 && <p className="muted">{t('checks.none')}</p>}
+      {pages > 1 && <Pager path="/checks" page={page} pages={pages} />}
       <ul className="plain">
         {items.map((album) => (
           <li key={album.id}>
@@ -55,13 +57,7 @@ function Checks() {
           </li>
         ))}
       </ul>
-      {pages > 1 && (
-        <nav className="pager">
-          {page > 0 && <Link to={`/checks?page=${page - 1}`}>{t('artists.prev')}</Link>}
-          <span className="muted">{t('artists.page', { page: page + 1, pages })}</span>
-          {page + 1 < pages && <Link to={`/checks?page=${page + 1}`}>{t('artists.next')}</Link>}
-        </nav>
-      )}
+      {pages > 1 && <Pager path="/checks" page={page} pages={pages} />}
     </>
   )
 }
