@@ -14,13 +14,20 @@ public final class CatalogueViews {
     public record ArtistSummary(long id, String name) {
     }
 
-    public record ArtistTile(long id, String name, String coverUrl) {
+    /** Сярэдняя ацэнка ад 1 да 10 і колькі водгукаў яе далі. */
+    public record Rating(double average, int count) {
+    }
+
+    /** rating — сярэдняя ўсіх водгукаў на альбомы выканаўцы; null, калі іх няма або водгукі выключаныя. */
+    public record ArtistTile(long id, String name, String coverUrl, Rating rating) {
     }
 
     public record CreditView(long artistId, String name, String joinPhrase) {
     }
 
-    public record AlbumSummary(long id, int year, String title, String coverUrl, List<CreditView> credit) {
+    /** rating — null, калі водгукаў няма або яны выключаныя. */
+    public record AlbumSummary(long id, int year, String title, String coverUrl, List<CreditView> credit,
+                               Rating rating) {
     }
 
     public record TrackHit(long id, int number, String title, List<CreditView> credit, AlbumSummary album) {

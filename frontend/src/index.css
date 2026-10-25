@@ -7,6 +7,8 @@
   --free: #1f6f43;
   --nyp: #8a5a00;
   --nyp-bg: #fff6e0;
+  --rating-empty: #ffffff;
+  --rating-none: #c9c9ce;
 
   color-scheme: light dark;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -23,6 +25,8 @@
     --free: #7fd6a2;
     --nyp: #ffcc66;
     --nyp-bg: #2e2614;
+    --rating-empty: var(--bg);
+    --rating-none: #4a4a50;
   }
 }
 
@@ -383,4 +387,54 @@ a {
   .album-head {
     grid-template-columns: 1fr;
   }
+}
+
+/* Ацэнка: дзесяць квадратаў, чырвоныя да сярэдняй; квадрат, у які яна трапляе, — чырвоны часткова. */
+.rating {
+  display: flex;
+  gap: 2px;
+}
+
+.rating > span {
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 1px solid var(--line);
+  background: linear-gradient(to right, var(--accent) var(--fill), var(--rating-empty) var(--fill));
+}
+
+.rating.none > span {
+  background: var(--rating-none);
+}
+
+.score-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.score-picker button {
+  min-width: 2.2rem;
+  padding: 0.3rem;
+  font: inherit;
+}
+
+.score-picker button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+.banner {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  padding: 0.75rem 1rem;
+}
+
+.review {
+  margin-bottom: 1rem;
+}
+
+.review p {
+  white-space: pre-wrap;
+  margin: 0.3rem 0;
 }

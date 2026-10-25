@@ -59,14 +59,23 @@ class RegistrationTest {
     private RecordingMailer mailer;
 
     @BeforeEach
-    void clean(@Autowired JdbcClient jdbc, @Autowired LoginLimiter limiter) {
+    void clean(@Autowired JdbcClient jdbc, @Autowired LoginLimiter limiter,
+               @Autowired RegistrationLimiter registrations, @Autowired RegistrationAlarm alarm) {
         jdbc.sql("TRUNCATE app_user RESTART IDENTITY CASCADE").update();
         mailer.sent.clear();
         limiter.clear();
+        registrations.clear();
+        alarm.clear();
     }
 
     private int register(String email, String password) throws Exception {
+        return register(email, password, "192.0.2.1");
+    }
+
+    /** forwardedFor — загаловак X-Forwarded-For, як яго прысылае CloudFront. */
+    private int register(String email, String password, String forwardedFor) throws Exception {
         return mvc.perform(post("/api/auth/register").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Forwarded-For", forwardedFor)
                         .content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
                 .andReturn().getResponse().getStatus();
     }
@@ -149,5 +158,38 @@ class RegistrationTest {
         var session = (org.springframework.mock.web.MockHttpSession) result.getRequest().getSession(false);
         mvc.perform(get("/api/auth/me").session(session)).andExpect(jsonPath("$.role").value("USER"));
         mvc.perform(get("/api/admin/artists/1/permissions").session(session)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void sevenRegistrationsFromOneAddressADay() throws Exception {
+        for (int i = 1; i <= 7; i++) {
+            assertThat(register("user" + i + "@example.org", PASSWORD, "203.0.113.5")).isEqualTo(202);
+        }
+        assertThat(register("user8@example.org", PASSWORD, "203.0.113.5")).isEqualTo(429);
+        assertThat(register("user8@example.org", PASSWORD, "203.0.113.5, 198.51.100.7"))
+                .as("CloudFront's address, the last one, counts").isEqualTo(202);
+        assertThat(register("user9@example.org", PASSWORD, "198.51.100.9, 203.0.113.5"))
+                .as("what the client wrote in front does not").isEqualTo(429);
+    }
+
+    @Test
+    void mailsTheAdminsWhenMoreThanTenRegisterInAnHour(@Autowired JdbcClient jdbc,
+                                                       @Autowired AppUserRepository users) throws Exception {
+        users.save(new AppUser("admin@example.org", "x", Role.ADMIN));
+        jdbc.sql("UPDATE app_user SET created_at = now() - interval '2 days'").update();
+        jdbc.sql("""
+                INSERT INTO app_user (email, password_hash, role)
+                SELECT 'bot' || g || '@example.org', 'x', 'USER' FROM generate_series(1, 9) g""").update();
+
+        register("user10@example.org", PASSWORD);
+        assertThat(alarms()).as("ten in the hour").isZero();
+        register("user11@example.org", PASSWORD);
+        assertThat(alarms()).as("eleven").isEqualTo(1);
+        register("user12@example.org", PASSWORD);
+        assertThat(alarms()).as("at most one an hour").isEqualTo(1);
+    }
+
+    private long alarms() {
+        return mailer.sent.stream().filter(m -> m[0].equals("admin@example.org")).count();
     }
 }

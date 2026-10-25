@@ -32,6 +32,8 @@ export default function RegisterPage() {
     const response = await send('POST', '/api/auth/register', JSON.stringify({ email, password }), true)
     if (response.ok) {
       setSent(true)
+    } else if (response.status === 429) {
+      setError(t('account.tooManyRegistrations'))
     } else {
       setError(t('admin.failed', { reason: await reason(response) }))
     }

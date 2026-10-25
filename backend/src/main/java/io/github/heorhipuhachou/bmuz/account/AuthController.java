@@ -3,6 +3,7 @@ package io.github.heorhipuhachou.bmuz.account;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotBlank;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -35,12 +37,14 @@ class AuthController {
 
     /**
      * artists — выканаўцы, якіх гэты запіс праўляе; адміністратар праўляе ўсіх і без гэтага сьпісу. displayName і
-     * spelling — з профілю, null, пакуль не зададзеныя.
+     * spelling — з профілю, null, пакуль не зададзеныя. reviewsFrom — з якога моманту можна пісаць водгукі.
      */
-    record Me(String email, String role, List<Long> artists, String displayName, String spelling) {
+    record Me(String email, String role, List<Long> artists, String displayName, String spelling,
+              Instant reviewsFrom) {
     }
 
-    record Config(boolean registration) {
+    /** reviews — ці ёсьць на сайце водгукі і ацэнкі (bmuz.reviews.enabled). */
+    record Config(boolean registration, boolean reviews) {
     }
 
     record RegisterRequest(String email, String password) {
@@ -67,10 +71,12 @@ class AuthController {
     private final TeamService team;
     private final EmailChangeService emailChange;
     private final AppUserRepository users;
+    private final boolean reviews;
 
     AuthController(AuthenticationManager authentication, SecurityContextRepository contexts, LoginLimiter limiter,
                    RegistrationService registration, PasswordResetService passwordReset,
-                   TeamService team, EmailChangeService emailChange, AppUserRepository users) {
+                   TeamService team, EmailChangeService emailChange, AppUserRepository users,
+                   @Value("${bmuz.reviews.enabled:false}") boolean reviews) {
         this.authentication = authentication;
         this.contexts = contexts;
         this.limiter = limiter;
@@ -79,17 +85,18 @@ class AuthController {
         this.team = team;
         this.emailChange = emailChange;
         this.users = users;
+        this.reviews = reviews;
     }
 
     @GetMapping("/config")
     Config config() {
-        return new Config(registration.isEnabled());
+        return new Config(registration.isEnabled(), reviews);
     }
 
     /** Адказ заўсёды 202, нават калі адрас ужо ёсьць: форма не павінна выдаваць, хто зарэгістраваны. */
     @PostMapping("/register")
-    ResponseEntity<Void> register(@RequestBody RegisterRequest body) {
-        registration.register(body.email() == null ? "" : body.email(), body.password());
+    ResponseEntity<Void> register(@RequestBody RegisterRequest body, HttpServletRequest request) {
+        registration.register(body.email() == null ? "" : body.email(), body.password(), clientAddress(request));
         return ResponseEntity.accepted().build();
     }
 
@@ -187,6 +194,20 @@ class AuthController {
                 .findFirst().orElse(Role.USER.name());
         AppUser user = users.findByEmail(AppUser.normalise(auth.getName())).orElse(null);
         return new Me(auth.getName(), role, team.managedArtists(auth.getName()).stream().sorted().toList(),
-                user == null ? null : user.getDisplayName(), user == null ? null : user.getSpelling());
+                user == null ? null : user.getDisplayName(), user == null ? null : user.getSpelling(),
+                user == null ? null : user.reviewsFrom());
+    }
+
+    /**
+     * IP-адрас наведніка. Сэрвэр адказвае толькі CloudFront, а той дапісвае адрас наведніка ў канец X-Forwarded-For;
+     * усё, што перад ім, мог напісаць сам кліент, таму бярэцца апошні.
+     */
+    static String clientAddress(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded == null || forwarded.isBlank()) {
+            return request.getRemoteAddr();
+        }
+        String[] addresses = forwarded.split(",");
+        return addresses[addresses.length - 1].strip();
     }
 }

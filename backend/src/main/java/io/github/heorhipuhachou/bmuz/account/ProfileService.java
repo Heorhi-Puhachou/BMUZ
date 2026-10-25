@@ -2,6 +2,7 @@ package io.github.heorhipuhachou.bmuz.account;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,16 +22,22 @@ class ProfileService {
     static final Set<String> SPELLINGS = Set.of("be-tarask", "be", "be-Latn");
 
     private final AppUserRepository users;
+    private final JdbcClient jdbc;
 
-    ProfileService(AppUserRepository users) {
+    ProfileService(AppUserRepository users, JdbcClient jdbc) {
         this.users = users;
+        this.jdbc = jdbc;
     }
 
-    /** Пустое імя здымае імя наогул. */
+    /** Пустое імя здымае імя наогул — толькі калі няма водгукаў: водгук не бывае ананімным. */
     @Transactional
     public void rename(String email, String displayName) {
         AppUser user = user(email);
         String name = displayName == null || displayName.isBlank() ? null : displayName.strip();
+        if (name == null && jdbc.sql("SELECT EXISTS (SELECT 1 FROM review WHERE user_id = ?)").param(user.getId())
+                .query(Boolean.class).single()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "reviews need a display name; delete them first");
+        }
         if (name != null) {
             if (name.codePointCount(0, name.length()) > MAX_NAME) {
                 throw bad("a display name is at most " + MAX_NAME + " characters");

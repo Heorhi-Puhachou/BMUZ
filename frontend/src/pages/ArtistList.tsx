@@ -1,8 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router'
 import { type ArtistTile, type Page, useApi } from '../api'
+import { useAuth } from '../auth'
 import Cover from '../Cover'
 import { useListFilter, withFilter } from '../listFilter'
+import RatingSquares from '../RatingSquares'
 import Status from '../Status'
 import { useTitle } from '../useTitle'
 
@@ -14,6 +16,7 @@ export default function ArtistList() {
   const [params] = useSearchParams()
   const page = Math.max(0, Number(params.get('page') ?? 0) || 0)
   const filter = useListFilter()
+  const { reviews } = useAuth()
   const loaded = useApi<Page<ArtistTile>>(withFilter(`/api/artists?page=${page}&size=${PAGE_SIZE}`, filter))
   useTitle(undefined)
 
@@ -31,6 +34,7 @@ export default function ArtistList() {
           <li key={artist.id}>
             <Link to={`/artists/${artist.id}`} className="tile">
               <Cover url={artist.coverUrl} title={artist.name} />
+              {reviews && <RatingSquares rating={artist.rating} />}
               <span className="tile-name">{artist.name}</span>
             </Link>
           </li>

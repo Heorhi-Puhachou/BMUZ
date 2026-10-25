@@ -14,8 +14,15 @@ export interface ArtistSummary {
   name: string
 }
 
+/** Сярэдняя ацэнка ад 1 да 10 і колькі водгукаў яе далі. */
+export interface Rating {
+  average: number
+  count: number
+}
+
 export interface ArtistTile extends ArtistSummary {
   coverUrl: string | null
+  rating: Rating | null
 }
 
 export interface CreditEntry {
@@ -39,6 +46,7 @@ export interface AlbumSummary {
   title: string
   coverUrl: string | null
   credit: CreditEntry[]
+  rating: Rating | null
 }
 
 export interface TrackHit {

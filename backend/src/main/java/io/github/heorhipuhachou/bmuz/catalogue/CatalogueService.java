@@ -8,11 +8,13 @@ import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.ArtistView;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.CreditView;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.LinkView;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.PageView;
+import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.Rating;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.SearchResult;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.TrackHit;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.TrackView;
 import io.github.heorhipuhachou.bmuz.cover.CoverService;
 import io.github.heorhipuhachou.bmuz.cover.CoverService.CoverUrls;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,14 +45,17 @@ public class CatalogueService {
     private final TrackRepository tracks;
     private final CoverService covers;
     private final JdbcClient jdbc;
+    private final boolean reviews;
 
     public CatalogueService(ArtistRepository artists, AlbumRepository albums, TrackRepository tracks,
-                            CoverService covers, JdbcClient jdbc) {
+                            CoverService covers, JdbcClient jdbc,
+                            @Value("${bmuz.reviews.enabled:false}") boolean reviews) {
         this.artists = artists;
         this.albums = albums;
         this.tracks = tracks;
         this.covers = covers;
         this.jdbc = jdbc;
+        this.reviews = reviews;
     }
 
     public PageView<ArtistTile> listArtists(int page, int size, ListFilter filter) {
@@ -65,8 +71,13 @@ public class CatalogueService {
             newest.putIfAbsent((Long) row[0], (Album) row[1]);
         }
         Map<Long, CoverUrls> coverUrls = covers.urls(newest.values().stream().map(Album::getId).toList());
+        Map<Long, Rating> ratings = ratings("""
+                        SELECT ac.artist_id, avg(r.score), count(*)
+                        FROM review r JOIN album_credit ac ON ac.album_id = r.album_id
+                        WHERE ac.artist_id IN (:ids) GROUP BY ac.artist_id""", ids);
         List<ArtistTile> tiles = result.getContent().stream()
-                .map(a -> new ArtistTile(a.getId(), a.getName(), small(newest.get(a.getId()), coverUrls)))
+                .map(a -> new ArtistTile(a.getId(), a.getName(), small(newest.get(a.getId()), coverUrls),
+                        ratings.get(a.getId())))
                 .toList();
         return new PageView<>(tiles, page, size, result.getTotalElements());
     }
@@ -83,13 +94,14 @@ public class CatalogueService {
         List<Long> shownAlbums = new ArrayList<>(ownIds);
         credited.forEach(t -> shownAlbums.add(t.getAlbum().getId()));
         Map<Long, CoverUrls> coverUrls = covers.urls(shownAlbums);
+        Map<Long, Rating> ratings = albumRatings(shownAlbums);
         List<TrackHit> otherTracks = credited.stream()
                 .map(t -> new TrackHit(t.getId(), t.getNumber(), t.getTitle(), credit(t.getCredits()),
-                        summary(t.getAlbum(), coverUrls)))
+                        summary(t.getAlbum(), coverUrls, ratings)))
                 .toList();
         return new ArtistView(artist.getId(), artist.getName(),
                 artist.getAliases().stream().map(ArtistAlias::getName).toList(),
-                own.stream().map(a -> summary(a, coverUrls)).toList(),
+                own.stream().map(a -> summary(a, coverUrls, ratings)).toList(),
                 otherTracks);
     }
 
@@ -156,10 +168,11 @@ public class CatalogueService {
         Map<Long, Album> found = albums.findAllById(albumIds).stream()
                 .collect(Collectors.toMap(Album::getId, Function.identity()));
         Map<Long, CoverUrls> coverUrls = covers.urls(albumIds);
+        Map<Long, Rating> ratings = albumRatings(albumIds);
         List<AlbumSummary> foundAlbums = albumIds.stream()
                 .map(found::get)
                 .filter(Objects::nonNull)
-                .map(a -> summary(a, coverUrls))
+                .map(a -> summary(a, coverUrls, ratings))
                 .toList();
         return new SearchResult(foundArtists, foundAlbums);
     }
@@ -168,9 +181,26 @@ public class CatalogueService {
         return filter.freeOnly() || filter.uncheckedBy() != 0;
     }
 
-    private static AlbumSummary summary(Album album, Map<Long, CoverUrls> coverUrls) {
+    private static AlbumSummary summary(Album album, Map<Long, CoverUrls> coverUrls, Map<Long, Rating> ratings) {
         return new AlbumSummary(album.getId(), album.getYear(), album.getTitle(), small(album, coverUrls),
-                credit(album.getCredits()));
+                credit(album.getCredits()), ratings.get(album.getId()));
+    }
+
+    private Map<Long, Rating> albumRatings(Collection<Long> albumIds) {
+        return ratings("SELECT album_id, avg(score), count(*) FROM review WHERE album_id IN (:ids) "
+                + "GROUP BY album_id", albumIds);
+    }
+
+    /** Запыт вяртае нумар, сярэднюю і колькасьць. Пакуль водгукі выключаныя, ацэнак няма зусім. */
+    private Map<Long, Rating> ratings(String sql, Collection<Long> ids) {
+        if (!reviews || ids.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Rating> ratings = new HashMap<>();
+        jdbc.sql(sql).param("ids", ids)
+                .query((rs, n) -> ratings.put(rs.getLong(1), new Rating(rs.getDouble(2), rs.getInt(3))))
+                .list();
+        return ratings;
     }
 
     private static String small(Album album, Map<Long, CoverUrls> coverUrls) {

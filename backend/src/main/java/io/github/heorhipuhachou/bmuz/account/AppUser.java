@@ -7,11 +7,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
 
 @Entity
 public class AppUser {
+
+    /** Новы ўліковы запіс піша водгукі толькі праз гэты час пасьля пацьверджаньня адрасу: абарона ад робатаў. */
+    public static final Duration REVIEW_WAIT = Duration.ofHours(24);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -111,6 +115,11 @@ public class AppUser {
 
     public boolean isConfirmed() {
         return confirmedAt != null;
+    }
+
+    /** З якога моманту гэты запіс можа пісаць водгукі; null, пакуль адрас не пацьверджаны. */
+    public Instant reviewsFrom() {
+        return confirmedAt == null ? null : confirmedAt.plus(REVIEW_WAIT);
     }
 
     boolean confirmExpiresAfter(Instant moment) {

@@ -8,6 +8,8 @@ export interface Me {
   /** З профілю; null, пакуль не зададзеныя. */
   displayName: string | null
   spelling: string | null
+  /** З якога моманту можна пісаць водгукі: суткі пасьля пацьверджаньня адрасу. */
+  reviewsFrom: string | null
 }
 
 /** Адміністратар або суперадміністратар: рэдагуе ўвесь каталёг. */
@@ -25,9 +27,11 @@ export interface Auth {
   setMe: (me: Me | null) => void
   /** Ці адкрытая публічная рэгістрацыя на гэтым сэрвэры. */
   registration: boolean
+  /** Ці ёсьць на гэтым сэрвэры водгукі і ацэнкі. */
+  reviews: boolean
 }
 
-export const AuthContext = createContext<Auth>({ me: null, setMe: () => {}, registration: false })
+export const AuthContext = createContext<Auth>({ me: null, setMe: () => {}, registration: false, reviews: false })
 
 export function useAuth() {
   return useContext(AuthContext)

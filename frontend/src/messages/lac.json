@@ -91,6 +91,7 @@
     "passwordAgain": "Parol jašče raz",
     "passwordHint": "Nie karaciej za 12 znakaŭ.",
     "mismatch": "Paroli nie supadajuć.",
+    "tooManyRegistrations": "Z hetaha sieciva za sutki ŭžo było 7 rehistracyj — bolš nielha. Pasprabujcie zaŭtra.",
     "consent": "Ja pahadžajusia, što sajt zachoŭvaje moj adras pošty i cheš parola, kab ja moh(-ła) uvachodzić. Padrabiaznaści — u razdziele «Pryvatnaść».",
     "sent": "Kali adras pravilny, na jaho pryjdzie list sa spasyłkaj. Adkryjcie jaje na praciahu 24 hadzin.",
     "confirming": "Paćviardžeńnie…",
@@ -126,7 +127,7 @@
     "spelling": "Pravapis",
     "spellingHint": "Uklučajecca, kali vy ŭvachodzicie, na luboj pryładzie. Pieraklučalnik uviersie staronki mianiaje toj samy vybar.",
     "deleteHeading": "Vydalić ulikovy zapis",
-    "deleteHint": "Adras pošty, parol, imia i pravapis vydalajucca nazaŭždy, a vy vychodzicie na ŭsich pryładach. Źmieny, jakija vy ŭnieśli ŭ kataloh, zastajucca, ale biez vašaha adrasa. Vokładki, jakija vy zahruzili, zastajucca razam z zapisam pra dazvoł na ich.",
+    "deleteHint": "Adras pošty, parol, imia, pravapis i vodhuki vydalajucca nazaŭždy, a vy vychodzicie na ŭsich pryładach. Źmieny, jakija vy ŭnieśli ŭ kataloh, zastajucca, ale biez vašaha adrasa. Vokładki, jakija vy zahruzili, zastajucca razam z zapisam pra dazvoł na ich.",
     "deleteUnderstood": "Ja razumieju, što viarnuć zapis nielha",
     "deleteSend": "Vydalić nazaŭždy",
     "deleted": "Ulikovy zapis vydaleny. Na vaš adras pajšoŭ apošni list pra heta."
@@ -215,6 +216,29 @@
       "COVER_UPLOAD": "vokładka zahružanaja",
       "COVER_REMOVE": "vokładka vydalenaja"
     }
+  },
+  "rating": {
+    "label": "Acenka {{average}} z 10, vodhukaŭ: {{count}}",
+    "none": "Acenak pakul niama"
+  },
+  "reviews": {
+    "heading": "Vodhuki",
+    "summary": "{{average}} z 10 · vodhukaŭ: {{count}}",
+    "loginToReview": "Uvajdzicie, kab pakinuć vodhuk",
+    "visitorBanner": "Kab pakinuć acenku z vodhukam, treba zarehistravacca. Pisać vodhuki možna praz sutki paśla paćvierdžańnia adrasu — tak sajt baronicca ad robataŭ.",
+    "waitBanner": "Vodhuk možna budzie pakinuć {{time}}, praz {{hours}} hadz. Novy ŭlikovy zapis čakaje sutki paśla paćvierdžańnia adrasu, kab robaty nie mahli zasypać sajt acenkami.",
+    "needName": "Kab pakinuć vodhuk, spačatku zadajcie imia na staroncy ŭlikovaha zapisu",
+    "ownAlbum": "Albomy svaich vykanaŭcaŭ aceńvać nielha.",
+    "yourScore": "Vaša acenka",
+    "pickScore": "Vybierycie acenku ad 1 da 10.",
+    "tooMany": "Za sutki možna pakinuć nie bolej za 30 novych vodhukaŭ. Pasprabujcie zaŭtra; źmianić užo napisany vodhuk možna i ciapier.",
+    "text": "Vodhuk",
+    "textHint": "Nie karaciej za {{min}} znakaŭ; ciapier {{count}}. Pad vodhukam budzie vaša imia.",
+    "save": "Zachavać vodhuk",
+    "update": "Źmianić vodhuk",
+    "delete": "Vydalić vodhuk",
+    "remove": "źniać",
+    "score": "{{score}} z 10"
   },
   "checks": {
     "heading": "Prahlad",

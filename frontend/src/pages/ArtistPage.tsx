@@ -8,6 +8,7 @@ import { canEdit, useAuth } from '../auth'
 import Cover from '../Cover'
 import Credit from '../Credit'
 import { useListFilter, withFilter } from '../listFilter'
+import RatingSquares from '../RatingSquares'
 import Status from '../Status'
 import { useUnchecked } from '../unchecked'
 import { useTitle } from '../useTitle'
@@ -21,7 +22,7 @@ export default function ArtistPage() {
   const { t } = useTranslation()
   const { id } = useParams()
   const filter = useListFilter()
-  const { me } = useAuth()
+  const { me, reviews } = useAuth()
   const [reload, setReload] = useState(0)
   const loaded = useApi<Artist>(withFilter(`/api/artists/${id}`, filter), reload)
   const unchecked = useUnchecked()
@@ -54,6 +55,7 @@ export default function ArtistPage() {
                     title={album.title}
                     mark={unchecked.has(album.id) ? t('checks.albumMark') : undefined}
                   />
+                  {reviews && <RatingSquares rating={album.rating} />}
                   <span className="tile-name">{album.title}</span>
                 </Link>
                 {others(album) && (

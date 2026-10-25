@@ -4,6 +4,7 @@ import { useParams } from 'react-router'
 import { type Album, creditText, useApi } from '../api'
 import AlbumCheck from '../AlbumCheck'
 import AlbumEditor from '../AlbumEditor'
+import AlbumReviews from '../AlbumReviews'
 import ArtistCover from '../ArtistCover'
 import { canEdit, isAdmin, useAuth } from '../auth'
 import Cover from '../Cover'
@@ -23,7 +24,7 @@ function formatLength(seconds: number | null) {
 export default function AlbumPage() {
   const { t } = useTranslation()
   const { id } = useParams()
-  const { me } = useAuth()
+  const { me, reviews } = useAuth()
   const [reload, setReload] = useState(0)
   const loaded = useApi<Album>(`/api/albums/${id}`, reload)
   useTitle(loaded.state === 'ok' ? `${loaded.data.title} — ${creditText(loaded.data.credit)}` : undefined)
@@ -91,6 +92,8 @@ export default function AlbumPage() {
           ))}
         </ol>
       )}
+
+      {reviews && <AlbumReviews album={album} />}
     </>
   )
 }
