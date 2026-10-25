@@ -282,7 +282,7 @@ class ArtistEditingTest {
     }
 
     @Test
-    void uploadsOwnCoverWithTheUploadItselfAsTheBasis() throws Exception {
+    void uploadsOwnCover() throws Exception {
         MockHttpSession artist = newArtistAccount();
         ByteArrayOutputStream png = new ByteArrayOutputStream();
         ImageIO.write(new BufferedImage(900, 900, BufferedImage.TYPE_INT_RGB), "png", png);
@@ -294,9 +294,7 @@ class ArtistEditingTest {
                 .andExpect(jsonPath("$.large").value(org.hamcrest.Matchers.startsWith("/covers/")));
         mvc.perform(multipart(HttpMethod.PUT, "/api/edit/albums/" + bandAlbum + "/cover").file(file).with(csrf())
                 .session(artist)).andExpect(status().isOk());
-        assertThat(id("SELECT count(*) FROM permission WHERE kind = 'WRITTEN_PERMISSION'")).as("one basis, reused")
-                .isEqualTo(1);
-        assertThat(jdbc.sql("SELECT proof FROM permission").query(String.class).single()).contains(ARTIST);
+        assertThat(id("SELECT count(*) FROM cover")).as("the second replaces the first").isEqualTo(1);
         mvc.perform(multipart(HttpMethod.PUT, "/api/edit/albums/" + strangerAlbum + "/cover").file(file).with(csrf())
                 .session(artist)).andExpect(status().isForbidden());
     }

@@ -21,6 +21,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ResetPage from './pages/ResetPage'
 import NotFound from './pages/NotFound'
+import PrivacyPage from './pages/PrivacyPage'
 import SearchPage from './pages/SearchPage'
 import TeamPage from './pages/TeamPage'
 
@@ -36,6 +37,7 @@ createRoot(document.getElementById('root')!).render(
               <Route path="albums/:id" element={<AlbumPage />} />
               <Route path="search" element={<SearchPage />} />
               <Route path="about" element={<AboutPage />} />
+              <Route path="privacy" element={<PrivacyPage />} />
               <Route path="login" element={<LoginPage />} />
               <Route path="admin" element={<LoginPage />} />
               <Route path="register" element={<RegisterPage />} />

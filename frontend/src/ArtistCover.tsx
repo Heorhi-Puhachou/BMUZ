@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { Album } from './api'
 import { reason, send } from './auth'
 
-// Вокладка, якую выканаўца загружае сам. Адміністратар загружае праз сваю панэль, дзе выбірае падставу.
+// Вокладка, якую выканаўца загружае сам. Адміністратар загружае праз сваю панэль.
 export default function ArtistCover({ album, onChange }: { album: Album; onChange: () => void }) {
   const { t } = useTranslation()
   const [file, setFile] = useState<File | null>(null)

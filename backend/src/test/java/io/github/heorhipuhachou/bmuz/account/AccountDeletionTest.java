@@ -53,11 +53,8 @@ class AccountDeletionTest {
         jdbc.sql("INSERT INTO album_credit (album_id, position, artist_id) VALUES (?, 0, ?)").params(album, artist)
                 .update();
         jdbc.sql("INSERT INTO artist_member (artist_id, user_id) VALUES (?, ?)").params(artist, me).update();
-        long basis = id("INSERT INTO permission (artist_id, kind, proof, granted_on, scope, created_by) VALUES ("
-                + artist + ", 'WRITTEN_PERMISSION', 'Загружае сам выканаўца з уліковага запісу " + ME
-                + "', current_date, 'covers', " + me + ") RETURNING id");
-        jdbc.sql("INSERT INTO cover (album_id, large_key, small_key, permission_id, uploaded_by) VALUES (?, 'l', 's', ?, ?)")
-                .params(album, basis, me).update();
+        jdbc.sql("INSERT INTO cover (album_id, large_key, small_key, uploaded_by) VALUES (?, 'l', 's', ?)")
+                .params(album, me).update();
         jdbc.sql("INSERT INTO edit_log (user_id, email, action, subject) VALUES (?, ?, 'ALBUM_UPDATE', 'A')")
                 .params(me, ME).update();
         mailer.sent.clear();
@@ -85,7 +82,7 @@ class AccountDeletionTest {
     }
 
     @Test
-    void deletesThePersonButKeepsTheCoverBasisAndTheLog() throws Exception {
+    void deletesThePersonButKeepsTheCoverAndTheLog() throws Exception {
         MockHttpSession phone = login(ME);
         MockHttpSession laptop = login(ME);
         assertThat(delete(PASSWORD, laptop)).isEqualTo(204);
@@ -94,7 +91,6 @@ class AccountDeletionTest {
         assertThat(id("SELECT count(*) FROM artist_member")).isZero();
         assertThat(jdbc.sql("SELECT email FROM edit_log").query(String.class).single()).isEmpty();
         assertThat(id("SELECT count(*) FROM cover WHERE uploaded_by IS NULL")).isEqualTo(1);
-        assertThat(id("SELECT count(*) FROM permission WHERE created_by IS NULL")).isEqualTo(1);
         assertThat(mailer.sent).hasSize(1);
         assertThat(mailer.sent.getFirst()[0]).isEqualTo(ME);
 

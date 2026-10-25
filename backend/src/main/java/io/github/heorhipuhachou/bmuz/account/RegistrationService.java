@@ -32,21 +32,18 @@ public class RegistrationService {
     private final AppUserRepository users;
     private final PasswordEncoder encoder;
     private final Mailer mailer;
-    private final RegistrationLimiter limiter;
     private final RegistrationAlarm alarm;
     private final boolean enabled;
     private final String siteUrl;
     private final Clock clock;
     private final SecureRandom random = new SecureRandom();
 
-    RegistrationService(AppUserRepository users, PasswordEncoder encoder, Mailer mailer,
-                        RegistrationLimiter limiter, RegistrationAlarm alarm,
+    RegistrationService(AppUserRepository users, PasswordEncoder encoder, Mailer mailer, RegistrationAlarm alarm,
                         @Value("${bmuz.registration.enabled:false}") boolean enabled,
                         @Value("${bmuz.site-url:http://localhost:5173}") String siteUrl) {
         this.users = users;
         this.encoder = encoder;
         this.mailer = mailer;
-        this.limiter = limiter;
         this.alarm = alarm;
         this.enabled = enabled;
         this.siteUrl = siteUrl.replaceAll("/+$", "");
@@ -57,9 +54,8 @@ public class RegistrationService {
         return enabled;
     }
 
-    /** address — IP-адрас наведніка: зь яго — не болей за {@value RegistrationLimiter#MAX} рэгістрацый за суткі. */
     @Transactional
-    public void register(String email, String password, String address) {
+    public void register(String email, String password) {
         requireEnabled();
         String normalised = AppUser.normalise(email);
         if (!normalised.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
@@ -68,10 +64,6 @@ public class RegistrationService {
         if (password == null || password.length() < MIN_PASSWORD_LENGTH) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "the password needs at least " + MIN_PASSWORD_LENGTH + " characters");
-        }
-        if (!limiter.allow(address)) {
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                    "too many registrations from this address; try again tomorrow");
         }
         AppUser existing = users.findByEmail(normalised).orElse(null);
         if (existing != null && existing.isConfirmed()) {

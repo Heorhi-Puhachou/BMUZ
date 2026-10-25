@@ -182,8 +182,8 @@ public class CatalogueEditor {
     }
 
     /**
-     * Толькі пусты выканаўца: без альбомаў, трэкаў, падставы для вокладак і ўліковых запісаў. Альбомы выдаляюцца
-     * паасобку, каб кожны застаўся ў журнале; падстава — доказ дазволу, і яе не выдаляюць мімаходзь.
+     * Толькі пусты выканаўца: без альбомаў, трэкаў і ўліковых запісаў. Альбомы выдаляюцца паасобку, каб кожны застаўся
+     * ў журнале.
      */
     @Transactional
     public void deleteArtist(long artistId, String email) {
@@ -191,9 +191,6 @@ public class CatalogueEditor {
         Artist artist = artists.findById(artistId).orElseThrow(() -> notFound("artist"));
         if (uses("album_credit", artistId) || uses("track_credit", artistId)) {
             throw conflict("the artist still has albums or tracks");
-        }
-        if (uses("permission", artistId)) {
-            throw conflict("the artist has a cover basis on record");
         }
         if (uses("artist_member", artistId)) {
             throw conflict("the artist still has accounts; remove them on the team panel first");
@@ -373,15 +370,15 @@ public class CatalogueEditor {
         log.record(editor, "ARTIST_IMAGE_REMOVE", artist.getName(), artistId, null, before, null);
     }
 
-    /** Вокладка, якую выканаўца загружае сам. Адміністратар загружае праз сваю панэль, дзе выбірае падставу. */
+    /** Вокладка, якую выканаўца загружае сам. Адміністратар загружае праз сваю панэль. */
     @Transactional
     public CoverUrls uploadCover(long albumId, byte[] file, String email) throws IOException {
         Editor editor = editor(email);
         Album album = managedAlbum(albumId, editor);
         long artistId = album.getCredits().stream().map(c -> c.getArtist().getId())
                 .filter(editor.artists()::contains).findFirst()
-                .orElseThrow(() -> bad("the admin uploads covers with a basis, on the admin panel"));
-        CoverUrls urls = covers.uploadByArtist(albumId, artistId, file, email);
+                .orElseThrow(() -> bad("the admin uploads covers on the admin panel"));
+        CoverUrls urls = covers.upload(albumId, null, null, file, email);
         touched(albumId);
         log.record(editor, "COVER_UPLOAD", album.getTitle(), artistId, albumId, null, urls);
         return urls;

@@ -59,23 +59,15 @@ class RegistrationTest {
     private RecordingMailer mailer;
 
     @BeforeEach
-    void clean(@Autowired JdbcClient jdbc, @Autowired LoginLimiter limiter,
-               @Autowired RegistrationLimiter registrations, @Autowired RegistrationAlarm alarm) {
+    void clean(@Autowired JdbcClient jdbc, @Autowired LoginLimiter limiter, @Autowired RegistrationAlarm alarm) {
         jdbc.sql("TRUNCATE app_user RESTART IDENTITY CASCADE").update();
         mailer.sent.clear();
         limiter.clear();
-        registrations.clear();
         alarm.clear();
     }
 
     private int register(String email, String password) throws Exception {
-        return register(email, password, "192.0.2.1");
-    }
-
-    /** forwardedFor — загаловак X-Forwarded-For, як яго прысылае CloudFront. */
-    private int register(String email, String password, String forwardedFor) throws Exception {
         return mvc.perform(post("/api/auth/register").with(csrf()).contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Forwarded-For", forwardedFor)
                         .content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
                 .andReturn().getResponse().getStatus();
     }
@@ -157,19 +149,7 @@ class RegistrationTest {
                 .content("{\"email\":\"" + EMAIL + "\",\"password\":\"" + PASSWORD + "\"}")).andReturn();
         var session = (org.springframework.mock.web.MockHttpSession) result.getRequest().getSession(false);
         mvc.perform(get("/api/auth/me").session(session)).andExpect(jsonPath("$.role").value("USER"));
-        mvc.perform(get("/api/admin/artists/1/permissions").session(session)).andExpect(status().isForbidden());
-    }
-
-    @Test
-    void sevenRegistrationsFromOneAddressADay() throws Exception {
-        for (int i = 1; i <= 7; i++) {
-            assertThat(register("user" + i + "@example.org", PASSWORD, "203.0.113.5")).isEqualTo(202);
-        }
-        assertThat(register("user8@example.org", PASSWORD, "203.0.113.5")).isEqualTo(429);
-        assertThat(register("user8@example.org", PASSWORD, "203.0.113.5, 198.51.100.7"))
-                .as("CloudFront's address, the last one, counts").isEqualTo(202);
-        assertThat(register("user9@example.org", PASSWORD, "198.51.100.9, 203.0.113.5"))
-                .as("what the client wrote in front does not").isEqualTo(429);
+        mvc.perform(get("/api/admin/edits").session(session)).andExpect(status().isForbidden());
     }
 
     @Test

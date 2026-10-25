@@ -106,7 +106,7 @@ export default function Layout() {
       </main>
       <footer className="site-footer">
         <div className="wrap">
-          <Link to="/about">{t('about.link')}</Link>
+          <Link to="/about">{t('about.link')}</Link> · <Link to="/privacy">{t('privacy.link')}</Link>
         </div>
       </footer>
     </>

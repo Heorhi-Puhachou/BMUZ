@@ -60,6 +60,11 @@ class PageController {
         return page(HttpStatus.OK, "Пра сайт — " + SITE, SITE_DESCRIPTION);
     }
 
+    @GetMapping(value = "/privacy", produces = MediaType.TEXT_HTML_VALUE)
+    ResponseEntity<String> privacy() {
+        return page(HttpStatus.OK, "Прыватнасьць — " + SITE, SITE_DESCRIPTION);
+    }
+
     /** Старонкі ўліковага запісу. Іх адкрываюць наўпрост — у тым ліку спасылкай з ліста, — таму сэрвэр мусіць іх аддаваць. */
     @GetMapping(value = {"/login", "/admin", "/register", "/confirm", "/forgot", "/reset", "/invite", "/edits", "/team",
             "/checks", "/account", "/email"},

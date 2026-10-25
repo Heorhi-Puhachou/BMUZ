@@ -77,7 +77,7 @@ class AuthTest {
 
     @Test
     void keepsTheAdminApiClosedWithoutLogin() throws Exception {
-        mvc.perform(get("/api/admin/artists/1/permissions")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/admin/edits")).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -97,7 +97,7 @@ class AuthTest {
         mvc.perform(get("/api/auth/me").session(session))
                 .andExpect(jsonPath("$.email").value(EMAIL))
                 .andExpect(jsonPath("$.role").value("ADMIN"));
-        mvc.perform(get("/api/admin/artists/1/permissions").session(session)).andExpect(status().isOk());
+        mvc.perform(get("/api/admin/edits").session(session)).andExpect(status().isOk());
     }
 
     @Test

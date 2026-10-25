@@ -9,7 +9,7 @@ import jakarta.persistence.ManyToOne;
 
 import java.time.Instant;
 
-/** Вокладка альбома ў двух памерах; самі файлы ляжаць у сховішчы, тут — іх ключы і падстава. */
+/** Вокладка альбома ў двух памерах; самі файлы ляжаць у сховішчы, тут — іх ключы і, для адкрытай ліцэнзіі, яе назва і старонка. */
 @Entity
 public class Cover {
 
@@ -20,11 +20,11 @@ public class Cover {
 
     private String smallKey;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "permission_id")
-    private Permission permission;
+    private String licence;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private String licenceUrl;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uploaded_by")
     private AppUser uploadedBy;
 
@@ -33,11 +33,12 @@ public class Cover {
     protected Cover() {
     }
 
-    Cover(long albumId, String largeKey, String smallKey, Permission permission, AppUser uploadedBy) {
+    Cover(long albumId, String largeKey, String smallKey, String licence, String licenceUrl, AppUser uploadedBy) {
         this.albumId = albumId;
         this.largeKey = largeKey;
         this.smallKey = smallKey;
-        this.permission = permission;
+        this.licence = licence;
+        this.licenceUrl = licenceUrl;
         this.uploadedBy = uploadedBy;
         this.uploadedAt = Instant.now();
     }
@@ -54,7 +55,11 @@ public class Cover {
         return smallKey;
     }
 
-    public Permission getPermission() {
-        return permission;
+    public String getLicence() {
+        return licence;
+    }
+
+    public String getLicenceUrl() {
+        return licenceUrl;
     }
 }

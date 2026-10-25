@@ -1,10 +1,9 @@
-import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth'
 import { useTitle } from '../useTitle'
+import { MARK, withLink } from '../withLink'
 
-const EMAIL = 'admin@bmuz.eu'
-const MARK = '\u0000'
+export const EMAIL = 'admin@bmuz.eu'
 
 export default function AboutPage() {
   const { t } = useTranslation()
@@ -21,18 +20,6 @@ export default function AboutPage() {
       <p>{withLink(t('about.contact', { email: MARK }), email)}</p>
       {reviews && <p>{t('about.contactReviews')}</p>}
       <p>{t('about.contactOther')}</p>
-    </>
-  )
-}
-
-// Устаўляе спасылку туды, дзе ў перакладзе стаіць {{email}}.
-function withLink(text: string, link: ReactNode) {
-  const [before, after] = text.split(MARK)
-  return (
-    <>
-      {before}
-      {link}
-      {after}
     </>
   )
 }

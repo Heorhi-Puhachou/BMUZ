@@ -57,8 +57,6 @@ class CoverTest {
     private JsonMapper json;
 
     private long albumId;
-    private long creditedArtist;
-    private long otherArtist;
     private MockHttpSession session;
 
     @BeforeEach
@@ -70,8 +68,6 @@ class CoverTest {
                 new AlbumEntry(2020, "Album", List.of(new CreditEntry("Band", null)), List.of(), List.of()),
                 new AlbumEntry(2021, "Other", List.of(new CreditEntry("Stranger", null)), List.of(), List.of()))));
         albumId = id("SELECT id FROM album WHERE title = 'Album'");
-        creditedArtist = id("SELECT id FROM artist WHERE name = 'Band'");
-        otherArtist = id("SELECT id FROM artist WHERE name = 'Stranger'");
         session = (MockHttpSession) mvc.perform(post("/api/auth/login").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + ADMIN + "\",\"password\":\"" + PASSWORD + "\"}"))
@@ -80,23 +76,6 @@ class CoverTest {
 
     private long id(String sql) {
         return jdbc.sql(sql).query(Long.class).single();
-    }
-
-    private long permission(long artistId, String kind, String licence, String proofUrl) throws Exception {
-        String body = json.writeValueAsString(new java.util.LinkedHashMap<String, Object>() {{
-            put("artistId", artistId);
-            put("kind", kind);
-            put("licence", licence);
-            put("proof", "Email from the band, 2026-10-20: yes, use our covers.");
-            put("proofUrl", proofUrl);
-            put("grantedOn", "2026-10-20");
-            put("scope", "all covers of the artist");
-        }});
-        String response = mvc.perform(post("/api/admin/permissions").with(admin()).with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isCreated())
-                .andReturn().getResponse().getContentAsString();
-        return json.readTree(response).get("id").asLong();
     }
 
     /** Сапраўдны ўваход: сэсія мусіць належаць запісу з базы, інакш правы не даюцца. */
@@ -114,10 +93,19 @@ class CoverTest {
         return out.toByteArray();
     }
 
-    private MockMultipartHttpServletRequestBuilder upload(long permissionId, byte[] file) {
+    private MockMultipartHttpServletRequestBuilder upload(byte[] file) {
+        return upload(file, null, null);
+    }
+
+    private MockMultipartHttpServletRequestBuilder upload(byte[] file, String licence, String licenceUrl) {
         MockMultipartHttpServletRequestBuilder request = multipart("/api/admin/albums/{id}/cover", albumId);
         request.file(new MockMultipartFile("file", "cover.png", "image/png", file));
-        request.param("permissionId", String.valueOf(permissionId));
+        if (licence != null) {
+            request.param("licence", licence);
+        }
+        if (licenceUrl != null) {
+            request.param("licenceUrl", licenceUrl);
+        }
         request.with(r -> {
             r.setMethod("PUT");
             return r;
@@ -127,8 +115,7 @@ class CoverTest {
 
     @Test
     void storesTwoSizesAndShowsTheCover() throws Exception {
-        long permission = permission(creditedArtist, "WRITTEN_PERMISSION", null, null);
-        mvc.perform(upload(permission, png(1600, 1600)).with(admin()).with(csrf()))
+        mvc.perform(upload(png(1600, 1600)).with(admin()).with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.large").value(org.hamcrest.Matchers.startsWith("/covers/" + albumId + "-")));
 
@@ -144,36 +131,25 @@ class CoverTest {
     }
 
     @Test
-    void refusesAPermissionOfAnArtistNotOnTheAlbum() throws Exception {
-        long foreign = permission(otherArtist, "WRITTEN_PERMISSION", null, null);
-        mvc.perform(upload(foreign, png(100, 100)).with(admin()).with(csrf())).andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void refusesAnUploadWithoutAPermission() throws Exception {
-        mvc.perform(upload(999_999, png(100, 100)).with(admin()).with(csrf())).andExpect(status().isBadRequest());
-    }
-
-    @Test
     void refusesAFileThatIsNotAnImage() throws Exception {
-        long permission = permission(creditedArtist, "WRITTEN_PERMISSION", null, null);
-        mvc.perform(upload(permission, "not an image".getBytes()).with(admin()).with(csrf()))
+        mvc.perform(upload("not an image".getBytes()).with(admin()).with(csrf()))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void needsTheLicenceAndItsPageForAnOpenLicence() throws Exception {
-        mvc.perform(post("/api/admin/permissions").with(admin()).with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"artistId\":" + creditedArtist + ",\"kind\":\"OPEN_LICENCE\",\"proof\":\"CC\","
-                                + "\"grantedOn\":\"2026-10-20\",\"scope\":\"all\"}"))
+        mvc.perform(upload(png(100, 100), "CC BY 4.0", null).with(admin()).with(csrf()))
+                .andExpect(status().isBadRequest());
+        mvc.perform(upload(png(100, 100), null, "https://band.example/album").with(admin()).with(csrf()))
+                .andExpect(status().isBadRequest());
+        mvc.perform(upload(png(100, 100), "CC BY 4.0", "javascript:alert(1)").with(admin()).with(csrf()))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void showsTheLicenceNextToAnOpenLicenceCover() throws Exception {
-        long permission = permission(creditedArtist, "OPEN_LICENCE", "CC BY 4.0", "https://band.example/album");
-        mvc.perform(upload(permission, png(400, 400)).with(admin()).with(csrf())).andExpect(status().isOk());
+        mvc.perform(upload(png(400, 400), "CC BY 4.0", "https://band.example/album").with(admin()).with(csrf()))
+                .andExpect(status().isOk());
         mvc.perform(get("/api/albums/{id}", albumId))
                 .andExpect(jsonPath("$.coverLicence").value("CC BY 4.0"))
                 .andExpect(jsonPath("$.coverSource").value("https://band.example/album"));
@@ -181,6 +157,6 @@ class CoverTest {
 
     @Test
     void refusesUploadsFromVisitors() throws Exception {
-        mvc.perform(upload(1, png(100, 100)).with(csrf())).andExpect(status().isUnauthorized());
+        mvc.perform(upload(png(100, 100)).with(csrf())).andExpect(status().isUnauthorized());
     }
 }

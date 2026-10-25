@@ -95,8 +95,8 @@ class AuthController {
 
     /** Адказ заўсёды 202, нават калі адрас ужо ёсьць: форма не павінна выдаваць, хто зарэгістраваны. */
     @PostMapping("/register")
-    ResponseEntity<Void> register(@RequestBody RegisterRequest body, HttpServletRequest request) {
-        registration.register(body.email() == null ? "" : body.email(), body.password(), clientAddress(request));
+    ResponseEntity<Void> register(@RequestBody RegisterRequest body) {
+        registration.register(body.email() == null ? "" : body.email(), body.password());
         return ResponseEntity.accepted().build();
     }
 
@@ -196,18 +196,5 @@ class AuthController {
         return new Me(auth.getName(), role, team.managedArtists(auth.getName()).stream().sorted().toList(),
                 user == null ? null : user.getDisplayName(), user == null ? null : user.getSpelling(),
                 user == null ? null : user.reviewsFrom());
-    }
-
-    /**
-     * IP-адрас наведніка. Сэрвэр адказвае толькі CloudFront, а той дапісвае адрас наведніка ў канец X-Forwarded-For;
-     * усё, што перад ім, мог напісаць сам кліент, таму бярэцца апошні.
-     */
-    static String clientAddress(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded == null || forwarded.isBlank()) {
-            return request.getRemoteAddr();
-        }
-        String[] addresses = forwarded.split(",");
-        return addresses[addresses.length - 1].strip();
     }
 }

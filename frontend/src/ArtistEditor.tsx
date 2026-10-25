@@ -36,7 +36,7 @@ export default function ArtistEditor({ artist, onChange }: { artist: Artist; onC
     }
   }
 
-  // Сэрвэр адмаўляе, пакуль у выканаўцы ёсьць альбомы, трэкі, падстава для вокладак або ўліковыя запісы.
+  // Сэрвэр адмаўляе, пакуль у выканаўцы ёсьць альбомы, трэкі або ўліковыя запісы.
   async function deleteArtist() {
     if (!window.confirm(t('edit.confirmDeleteArtist', { name: artist.name }))) {
       return

@@ -54,7 +54,7 @@ class ArtistImageTest {
 
     @BeforeEach
     void artistAndAccounts(@Autowired AppUserRepository users, @Autowired PasswordEncoder encoder) throws Exception {
-        jdbc.sql("TRUNCATE artist, album, app_user, edit_log, permission RESTART IDENTITY CASCADE").update();
+        jdbc.sql("TRUNCATE artist, album, app_user, edit_log RESTART IDENTITY CASCADE").update();
         for (String email : new String[]{ADMIN, BAND, OTHER_BAND}) {
             users.save(new AppUser(email, encoder.encode(PASSWORD), Role.ADMIN));
         }
@@ -100,7 +100,6 @@ class ArtistImageTest {
         assertThat(upload(band)).isEqualTo(200);
         assertThat(upload(band)).as("a second one replaces the first").isEqualTo(200);
         assertThat(id("SELECT count(*) FROM artist_image")).isEqualTo(1);
-        assertThat(id("SELECT count(*) FROM permission")).as("one basis, reused").isEqualTo(1);
         mvc.perform(get("/api/artists"))
                 .andExpect(jsonPath("$.items[0].name").value("Band"))
                 .andExpect(jsonPath("$.items[0].coverUrl").value(startsWith("/covers/artist-" + artist + "-")));

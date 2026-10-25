@@ -32,8 +32,6 @@ export default function RegisterPage() {
     const response = await send('POST', '/api/auth/register', JSON.stringify({ email, password }), true)
     if (response.ok) {
       setSent(true)
-    } else if (response.status === 429) {
-      setError(t('account.tooManyRegistrations'))
     } else {
       setError(t('admin.failed', { reason: await reason(response) }))
     }
@@ -76,7 +74,7 @@ export default function RegisterPage() {
       <label className="basis">
         <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} />
         <span>
-          {t('account.consent')} <Link to="/about">{t('about.heading')}</Link>
+          {t('account.consent')} <Link to="/privacy">{t('privacy.heading')}</Link>
         </span>
       </label>
       {error && <p role="alert">{error}</p>}

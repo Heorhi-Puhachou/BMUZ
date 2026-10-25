@@ -40,6 +40,7 @@ class SitemapController {
                 + "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
         url(xml, "/");
         url(xml, "/about");
+        url(xml, "/privacy");
         artists.findAllIds().forEach(id -> url(xml, "/artists/" + id));
         albums.findAllIds().forEach(id -> url(xml, "/albums/" + id));
         xml.append("</urlset>\n");

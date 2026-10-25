@@ -55,6 +55,7 @@ class SitemapControllerTest {
                 .andExpect(content().contentTypeCompatibleWith("application/xml"))
                 .andExpect(content().string(containsString("<loc>https://example.test/</loc>")))
                 .andExpect(content().string(containsString("<loc>https://example.test/about</loc>")))
+                .andExpect(content().string(containsString("<loc>https://example.test/privacy</loc>")))
                 .andExpect(content().string(containsString("<loc>https://example.test/artists/" + artistId + "</loc>")))
                 .andExpect(content().string(containsString("<loc>https://example.test/albums/" + albumId + "</loc>")))
                 .andExpect(content().string(not(containsString("/login"))));

@@ -359,15 +359,15 @@ a {
   place-items: center;
   font-size: 2.5rem;
   font-weight: 300;
-  background: hsl(var(--hue) 35% 82%);
-  color: hsl(var(--hue) 30% 35%);
+  background: hsl(var(--hue, 0) 35% 82%);
+  color: hsl(var(--hue, 0) 30% 35%);
   user-select: none;
 }
 
 @media (prefers-color-scheme: dark) {
   .stub {
-    background: hsl(var(--hue) 25% 28%);
-    color: hsl(var(--hue) 35% 78%);
+    background: hsl(var(--hue, 0) 25% 28%);
+    color: hsl(var(--hue, 0) 35% 78%);
   }
 }
 
@@ -399,7 +399,15 @@ a {
   width: 0.7rem;
   height: 0.7rem;
   border: 1px solid var(--line);
-  background: linear-gradient(to right, var(--accent) var(--fill), var(--rating-empty) var(--fill));
+  background: linear-gradient(to right, var(--accent) var(--fill, 0%), var(--rating-empty) var(--fill, 0%));
+}
+
+/* На плітцы дзесяць квадратаў займаюць усю шырыню вокладкі. */
+.tile .rating > span {
+  flex: 1;
+  width: auto;
+  height: auto;
+  aspect-ratio: 1;
 }
 
 .rating.none > span {
