@@ -33,8 +33,15 @@ public final class CatalogueViews {
     public record TrackHit(long id, int number, String title, List<CreditView> credit, AlbumSummary album) {
     }
 
+    /**
+     * contacts — тое, што выканаўца сам паказвае на сваёй старонцы; пусты сьпіс, калі нічога. imageUrl — выява, якую
+     * выканаўца загрузіў сам; null, калі няма.
+     */
     public record ArtistView(long id, String name, List<String> aliases, List<AlbumSummary> albums,
-                             List<TrackHit> otherTracks) {
+                             List<TrackHit> otherTracks, List<ContactView> contacts, String imageUrl) {
+    }
+
+    public record ContactView(long id, ContactKind kind, String value) {
     }
 
     public record LinkView(long id, String store, String url, PriceType priceType, BigDecimal minPrice, String currency,

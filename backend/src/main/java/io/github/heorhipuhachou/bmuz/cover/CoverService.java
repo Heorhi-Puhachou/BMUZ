@@ -7,6 +7,7 @@ import io.github.heorhipuhachou.bmuz.catalogue.AlbumRepository;
 import io.github.heorhipuhachou.bmuz.catalogue.Artist;
 import io.github.heorhipuhachou.bmuz.catalogue.ArtistRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -39,6 +40,7 @@ public class CoverService {
     }
 
     static final String ARTIST_SCOPE = "вокладкі, якія выканаўца загружае сам";
+    static final String ARTIST_IMAGE_SCOPE = "выява выканаўцы, якую ён загружае сам";
 
     private final CoverRepository covers;
     private final PermissionRepository permissions;
@@ -46,15 +48,17 @@ public class CoverService {
     private final ArtistRepository artists;
     private final AppUserRepository users;
     private final CoverStorage storage;
+    private final JdbcClient jdbc;
 
     public CoverService(CoverRepository covers, PermissionRepository permissions, AlbumRepository albums,
-                        ArtistRepository artists, AppUserRepository users, CoverStorage storage) {
+                        ArtistRepository artists, AppUserRepository users, CoverStorage storage, JdbcClient jdbc) {
         this.covers = covers;
         this.permissions = permissions;
         this.albums = albums;
         this.artists = artists;
         this.users = users;
         this.storage = storage;
+        this.jdbc = jdbc;
     }
 
     @Transactional(readOnly = true)
@@ -137,6 +141,79 @@ public class CoverService {
                         "Загружае сам выканаўца з уліковага запісу " + user.getEmail(), null,
                         LocalDate.now(), ARTIST_SCOPE, user)));
         return upload(albumId, permission.getId(), file, email);
+    }
+
+    /** Выявы выканаўцаў, якія іх загрузілі, — малы памер для пліткі. Каго няма ў выніку, у таго выявы няма. */
+    @Transactional(readOnly = true)
+    public Map<Long, String> artistImages(Collection<Long> artistIds) {
+        Map<Long, String> result = new HashMap<>();
+        if (artistIds.isEmpty()) {
+            return result;
+        }
+        jdbc.sql("SELECT artist_id, small_key FROM artist_image WHERE artist_id IN (:ids)")
+                .param("ids", artistIds)
+                .query((rs, n) -> Map.entry(rs.getLong(1), CoverStorage.url(rs.getString(2))))
+                .list()
+                .forEach(e -> result.put(e.getKey(), e.getValue()));
+        return result;
+    }
+
+    /** null, калі выканаўца выявы не загружаў. */
+    @Transactional(readOnly = true)
+    public CoverUrls artistImage(long artistId) {
+        return jdbc.sql("SELECT large_key, small_key FROM artist_image WHERE artist_id = ?").param(artistId)
+                .query((rs, n) -> new CoverUrls(CoverStorage.url(rs.getString(1)), CoverStorage.url(rs.getString(2)),
+                        null, null))
+                .optional().orElse(null);
+    }
+
+    /**
+     * Выява, якую выканаўца загружае сам. Як і зь ягонымі вокладкамі, сама загрузка — пісьмовы дазвол: падстава
+     * ствараецца адзін раз на запіс і выканаўцу.
+     */
+    @Transactional
+    public CoverUrls uploadArtistImage(long artistId, byte[] file, String email) throws IOException {
+        AppUser user = admin(email);
+        Permission permission = permissions
+                .findFirstByArtistIdAndCreatedByIdAndScope(artistId, user.getId(), ARTIST_IMAGE_SCOPE)
+                .orElseGet(() -> permissions.save(new Permission(
+                        artists.findById(artistId).orElseThrow(), PermissionKind.WRITTEN_PERMISSION, null,
+                        "Загружае сам выканаўца з уліковага запісу " + user.getEmail(), null,
+                        LocalDate.now(), ARTIST_IMAGE_SCOPE, user)));
+        CoverImages.Resized resized = CoverImages.resize(file);
+        String base = "covers/artist-" + artistId + "-" + UUID.randomUUID();
+        String largeKey = base + "-" + CoverImages.LARGE + ".jpg";
+        String smallKey = base + "-" + CoverImages.SMALL + ".jpg";
+        storage.put(largeKey, resized.large());
+        storage.put(smallKey, resized.small());
+        List<String> old = oldKeys(artistId);
+        jdbc.sql("""
+                        INSERT INTO artist_image (artist_id, large_key, small_key, permission_id, uploaded_by)
+                        VALUES (?, ?, ?, ?, ?)
+                        ON CONFLICT (artist_id) DO UPDATE SET large_key = excluded.large_key,
+                            small_key = excluded.small_key, permission_id = excluded.permission_id,
+                            uploaded_by = excluded.uploaded_by, uploaded_at = now()""")
+                .params(artistId, largeKey, smallKey, permission.getId(), user.getId())
+                .update();
+        for (String key : old) {
+            storage.delete(key);
+        }
+        return new CoverUrls(CoverStorage.url(largeKey), CoverStorage.url(smallKey), null, null);
+    }
+
+    @Transactional
+    public void removeArtistImage(long artistId) throws IOException {
+        List<String> old = oldKeys(artistId);
+        jdbc.sql("DELETE FROM artist_image WHERE artist_id = ?").param(artistId).update();
+        for (String key : old) {
+            storage.delete(key);
+        }
+    }
+
+    private List<String> oldKeys(long artistId) {
+        return jdbc.sql("SELECT large_key, small_key FROM artist_image WHERE artist_id = ?").param(artistId)
+                .query((rs, n) -> List.of(rs.getString(1), rs.getString(2)))
+                .optional().orElse(List.of());
     }
 
     private static CoverUrls urls(Cover cover) {

@@ -27,6 +27,33 @@
     "albums": "Albomy",
     "otherTracks": "Treki na inšych albomach"
   },
+  "contacts": {
+    "heading": "Kantakty",
+    "hint": "Što pakazvać tut, vyrašajecie vy: kantakty bačyć kožny naviednik. Administratar moža ich vydalić, ale nie źmianić.",
+    "kindLabel": "Vid",
+    "valueLabel": "Adras",
+    "add": "Dadać kantakt",
+    "drop": "Prybrać",
+    "save": "Zachavać kantakty",
+    "remove": "vydalić",
+    "kind": {
+      "EMAIL": "Pošta",
+      "WEBSITE": "Sajt",
+      "INSTAGRAM": "Instagram",
+      "FACEBOOK": "Facebook",
+      "YOUTUBE": "YouTube",
+      "BANDCAMP": "Bandcamp",
+      "SOUNDCLOUD": "SoundCloud",
+      "OTHER": "Inšaje"
+    }
+  },
+  "artistImage": {
+    "heading": "Vyjava vykanaŭcy",
+    "hint": "Staić na plitcy vykanaŭcy ŭ śpisie. Pakul svajoj vyjavy niama, tam vokładka apošniaha alboma.",
+    "consent": "Zahružajučy vyjavu, vy paćviardžajecie, što možacie joju rasparadžacca, i dazvalajecie sajtu zachoŭvać i pakazvać jaje.",
+    "upload": "Zahruzić vyjavu",
+    "remove": "Vydalić vyjavu"
+  },
   "album": {
     "where": "Dzie ŭziać",
     "tracks": "Treki",
@@ -71,7 +98,9 @@
     "heading": "Pra sajt",
     "what": "Kataloh biełaruskaj muzyki, jakuju možna spampavać lehalna. Sajt nie zachoŭvaje muzyku (pakul što): jon tolki spasyłajecca na staronki, jakija vybrali sami vykanaŭcy abo ichnyja lejbły.",
     "contactHeading": "Kantakt",
-    "contact": "Kali spasyłka nie pracuje, viadzie nie tudy abo parušaje čyje-niebudź pravy, napišycie na {{email}} — jaje vypraviać abo vydalać."
+    "contact": "Kali spasyłka nie pracuje, viadzie nie tudy abo parušaje čyje-niebudź pravy, napišycie na {{email}} — jaje vypraviać abo vydalać.",
+    "contactReviews": "Pra vodhuk, jaki parušaje praviły sajta abo čyje-niebudź pravy, pišycie na toj samy adras.",
+    "contactOther": "Hety adras — i dla lubych inšych pytańniaŭ da sajta."
   },
   "account": {
     "loginHeading": "Uvachod",
@@ -214,7 +243,11 @@
       "LINK_UPDATE": "spasyłka źmienienaja",
       "LINK_DELETE": "spasyłka vydalenaja",
       "COVER_UPLOAD": "vokładka zahružanaja",
-      "COVER_REMOVE": "vokładka vydalenaja"
+      "COVER_REMOVE": "vokładka vydalenaja",
+      "CONTACTS_UPDATE": "kantakty źmienienyja",
+      "CONTACT_REMOVE": "kantakt vydaleny",
+      "ARTIST_IMAGE_UPLOAD": "vyjava vykanaŭcy zahružanaja",
+      "ARTIST_IMAGE_REMOVE": "vyjava vykanaŭcy vydalenaja"
     }
   },
   "rating": {

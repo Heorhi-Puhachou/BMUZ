@@ -10,6 +10,7 @@ import io.github.heorhipuhachou.bmuz.catalogue.ArtistAlias;
 import io.github.heorhipuhachou.bmuz.catalogue.ArtistRepository;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueService;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.AlbumView;
+import io.github.heorhipuhachou.bmuz.catalogue.ContactKind;
 import io.github.heorhipuhachou.bmuz.catalogue.Credit;
 import io.github.heorhipuhachou.bmuz.catalogue.Link;
 import io.github.heorhipuhachou.bmuz.catalogue.LinkDetails;
@@ -69,8 +70,20 @@ public class CatalogueEditor {
     public record Created(long id) {
     }
 
+    public record ContactInput(ContactKind kind, String value) {
+    }
+
+    public record ContactsInput(List<ContactInput> contacts) {
+    }
+
     private record ArtistState(String name, List<String> aliases) {
     }
+
+    private record ContactState(ContactKind kind, String value) {
+    }
+
+    static final int MAX_CONTACTS = 20;
+    static final int MAX_CONTACT_LENGTH = 300;
 
     private final AppUserRepository users;
     private final TeamService team;
@@ -123,6 +136,49 @@ public class CatalogueEditor {
         artist.rename(name);
         artist.replaceAliases(aliases);
         log.record(editor, "ARTIST_UPDATE", name, artistId, null, before, new ArtistState(name, aliases));
+    }
+
+    /**
+     * Кантакты піша толькі ўліковы запіс самога выканаўцы — адміністратар таксама не: паказваць іх ці не, вырашае
+     * выканаўца. Сьпіс замяняецца цалкам; аднолькавыя радкі застаюцца адным.
+     */
+    @Transactional
+    public void replaceContacts(long artistId, ContactsInput input, String email) {
+        Editor editor = editor(email);
+        Artist artist = artists.findById(artistId).orElseThrow(() -> notFound("artist"));
+        if (!editor.artists().contains(artistId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "only the artist's own account writes contacts");
+        }
+        List<ContactState> after = new ArrayList<>(new LinkedHashSet<>((input.contacts() == null
+                ? List.<ContactInput>of() : input.contacts()).stream().map(CatalogueEditor::contact).toList()));
+        if (after.size() > MAX_CONTACTS) {
+            throw bad("at most " + MAX_CONTACTS + " contacts");
+        }
+        List<ContactState> before = contacts(artistId);
+        jdbc.sql("DELETE FROM artist_contact WHERE artist_id = ?").param(artistId).update();
+        for (int i = 0; i < after.size(); i++) {
+            jdbc.sql("INSERT INTO artist_contact (artist_id, position, kind, value) VALUES (?, ?, ?, ?)")
+                    .params(artistId, i, after.get(i).kind().name(), after.get(i).value()).update();
+        }
+        log.record(editor, "CONTACTS_UPDATE", artist.getName(), artistId, null, before, after);
+    }
+
+    /** Адміністратар выдаляе кантакт — напрыклад, спасылку на незаконную копію, — але новых не піша. */
+    @Transactional
+    public void removeContact(long contactId, String email) {
+        Editor editor = editor(email);
+        require(editor.admin());
+        record Row(long artistId, String artist, ContactState contact) {
+        }
+        Row row = jdbc.sql("""
+                        SELECT c.artist_id, a.name, c.kind, c.value
+                        FROM artist_contact c JOIN artist a ON a.id = c.artist_id WHERE c.id = ?""")
+                .param(contactId)
+                .query((rs, n) -> new Row(rs.getLong(1), rs.getString(2),
+                        new ContactState(ContactKind.valueOf(rs.getString(3)), rs.getString(4))))
+                .optional().orElseThrow(() -> notFound("contact"));
+        jdbc.sql("DELETE FROM artist_contact WHERE id = ?").param(contactId).update();
+        log.record(editor, "CONTACT_REMOVE", row.artist(), row.artistId(), null, row.contact(), null);
     }
 
     /**
@@ -288,6 +344,35 @@ public class CatalogueEditor {
         log.record(editor, "LINK_DELETE", after.title(), after.credit().getFirst().artistId(), albumId, before, after);
     }
 
+    /**
+     * Выяву выканаўцы загружае толькі ягоны ўліковы запіс; адміністратар можа толькі зьняць яе. Пакуль выявы няма,
+     * плітка выканаўцы паказвае вокладку ягонага апошняга альбома.
+     */
+    @Transactional
+    public CoverUrls uploadArtistImage(long artistId, byte[] file, String email) throws IOException {
+        Editor editor = editor(email);
+        Artist artist = artists.findById(artistId).orElseThrow(() -> notFound("artist"));
+        if (!editor.artists().contains(artistId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "only the artist's own account uploads its image");
+        }
+        CoverUrls urls = covers.uploadArtistImage(artistId, file, email);
+        log.record(editor, "ARTIST_IMAGE_UPLOAD", artist.getName(), artistId, null, null, urls);
+        return urls;
+    }
+
+    @Transactional
+    public void removeArtistImage(long artistId, String email) throws IOException {
+        Editor editor = editor(email);
+        Artist artist = artists.findById(artistId).orElseThrow(() -> notFound("artist"));
+        require(editor.manages(artistId));
+        CoverUrls before = covers.artistImage(artistId);
+        if (before == null) {
+            return;
+        }
+        covers.removeArtistImage(artistId);
+        log.record(editor, "ARTIST_IMAGE_REMOVE", artist.getName(), artistId, null, before, null);
+    }
+
     /** Вокладка, якую выканаўца загружае сам. Адміністратар загружае праз сваю панэль, дзе выбірае падставу. */
     @Transactional
     public CoverUrls uploadCover(long albumId, byte[] file, String email) throws IOException {
@@ -386,6 +471,27 @@ public class CatalogueEditor {
         entities.flush();
         entities.clear();
         return catalogue.album(albumId);
+    }
+
+    private List<ContactState> contacts(long artistId) {
+        return jdbc.sql("SELECT kind, value FROM artist_contact WHERE artist_id = ? ORDER BY position")
+                .param(artistId)
+                .query((rs, n) -> new ContactState(ContactKind.valueOf(rs.getString(1)), rs.getString(2)))
+                .list();
+    }
+
+    private static ContactState contact(ContactInput input) {
+        if (input == null || input.kind() == null) {
+            throw bad("a contact needs a kind");
+        }
+        String value = required(input.value(), "contact");
+        if (value.codePointCount(0, value.length()) > MAX_CONTACT_LENGTH) {
+            throw bad("a contact is at most " + MAX_CONTACT_LENGTH + " characters");
+        }
+        if (!input.kind().accepts(value)) {
+            throw bad(value + " is not a valid " + input.kind().name().toLowerCase(Locale.ROOT) + " contact");
+        }
+        return new ContactState(input.kind(), value);
     }
 
     private static ArtistState state(Artist artist) {

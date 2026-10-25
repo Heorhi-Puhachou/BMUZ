@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { type AlbumSummary, type Artist, useApi } from '../api'
+import ArtistContacts from '../ArtistContacts'
 import ArtistEditor from '../ArtistEditor'
+import ArtistImage from '../ArtistImage'
 import ArtistMembers from '../ArtistMembers'
 import { canEdit, useAuth } from '../auth'
 import Cover from '../Cover'
@@ -39,6 +41,9 @@ export default function ArtistPage() {
       {artist.aliases.length > 0 && (
         <p className="muted">{t('artist.aliases', { names: artist.aliases.join(', ') })}</p>
       )}
+
+      <ArtistContacts artist={artist} onChange={() => setReload((r) => r + 1)} />
+      <ArtistImage artist={artist} onChange={() => setReload((r) => r + 1)} />
 
       {canEdit(me, [artist.id]) && <ArtistEditor key={artist.id} artist={artist} onChange={() => setReload((r) => r + 1)} />}
       {me?.role === 'SUPER_ADMIN' && <ArtistMembers artistId={artist.id} />}

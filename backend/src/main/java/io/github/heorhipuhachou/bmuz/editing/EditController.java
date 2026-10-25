@@ -3,6 +3,7 @@ package io.github.heorhipuhachou.bmuz.editing;
 import io.github.heorhipuhachou.bmuz.cover.CoverService.CoverUrls;
 import io.github.heorhipuhachou.bmuz.editing.CatalogueEditor.AlbumInput;
 import io.github.heorhipuhachou.bmuz.editing.CatalogueEditor.ArtistInput;
+import io.github.heorhipuhachou.bmuz.editing.CatalogueEditor.ContactsInput;
 import io.github.heorhipuhachou.bmuz.editing.CatalogueEditor.Created;
 import io.github.heorhipuhachou.bmuz.editing.CatalogueEditor.LinkInput;
 import io.github.heorhipuhachou.bmuz.editing.CatalogueEditor.TracksInput;
@@ -47,6 +48,19 @@ class EditController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     void updateArtist(@PathVariable long id, @RequestBody ArtistInput input, Authentication auth) {
         editor.updateArtist(id, input, auth.getName());
+    }
+
+    @PutMapping("/api/edit/artists/{id}/contacts")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void replaceContacts(@PathVariable long id, @RequestBody ContactsInput input, Authentication auth) {
+        editor.replaceContacts(id, input, auth.getName());
+    }
+
+    /** Толькі для адміністратара (/api/admin/**): выдаліць можна, напісаць — не. */
+    @DeleteMapping("/api/admin/artist-contacts/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void removeContact(@PathVariable long id, Authentication auth) {
+        editor.removeContact(id, auth.getName());
     }
 
     /** Толькі для супэрадміністратара (/api/super/**). */
@@ -96,6 +110,19 @@ class EditController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     void deleteLink(@PathVariable long id, Authentication auth) {
         editor.deleteLink(id, auth.getName());
+    }
+
+    @PutMapping("/api/edit/artists/{id}/image")
+    CoverUrls uploadArtistImage(@PathVariable long id, @RequestParam MultipartFile file, Authentication auth)
+            throws IOException {
+        return editor.uploadArtistImage(id, file.getBytes(), auth.getName());
+    }
+
+    /** Свой выканаўца — або адміністратар. */
+    @DeleteMapping("/api/edit/artists/{id}/image")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void removeArtistImage(@PathVariable long id, Authentication auth) throws IOException {
+        editor.removeArtistImage(id, auth.getName());
     }
 
     @PutMapping("/api/edit/albums/{id}/cover")

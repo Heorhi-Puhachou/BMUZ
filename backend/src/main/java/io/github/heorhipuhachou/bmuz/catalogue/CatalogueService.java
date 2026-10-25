@@ -5,6 +5,7 @@ import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.AlbumView;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.ArtistSummary;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.ArtistTile;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.ArtistView;
+import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.ContactView;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.CreditView;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.LinkView;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.PageView;
@@ -29,6 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -75,8 +77,10 @@ public class CatalogueService {
                         SELECT ac.artist_id, avg(r.score), count(*)
                         FROM review r JOIN album_credit ac ON ac.album_id = r.album_id
                         WHERE ac.artist_id IN (:ids) GROUP BY ac.artist_id""", ids);
+        Map<Long, String> images = covers.artistImages(ids);
         List<ArtistTile> tiles = result.getContent().stream()
-                .map(a -> new ArtistTile(a.getId(), a.getName(), small(newest.get(a.getId()), coverUrls),
+                .map(a -> new ArtistTile(a.getId(), a.getName(),
+                        images.getOrDefault(a.getId(), small(newest.get(a.getId()), coverUrls)),
                         ratings.get(a.getId())))
                 .toList();
         return new PageView<>(tiles, page, size, result.getTotalElements());
@@ -102,7 +106,13 @@ public class CatalogueService {
         return new ArtistView(artist.getId(), artist.getName(),
                 artist.getAliases().stream().map(ArtistAlias::getName).toList(),
                 own.stream().map(a -> summary(a, coverUrls, ratings)).toList(),
-                otherTracks);
+                otherTracks,
+                jdbc.sql("SELECT id, kind, value FROM artist_contact WHERE artist_id = ? ORDER BY position")
+                        .param(id)
+                        .query((rs, n) -> new ContactView(rs.getLong(1), ContactKind.valueOf(rs.getString(2)),
+                                rs.getString(3)))
+                        .list(),
+                Optional.ofNullable(covers.artistImage(id)).map(CoverUrls::large).orElse(null));
     }
 
     public AlbumView album(long id) {

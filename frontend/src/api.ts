@@ -57,12 +57,35 @@ export interface TrackHit {
   album: AlbumSummary
 }
 
+export const CONTACT_KINDS = [
+  'EMAIL',
+  'WEBSITE',
+  'INSTAGRAM',
+  'FACEBOOK',
+  'YOUTUBE',
+  'BANDCAMP',
+  'SOUNDCLOUD',
+  'OTHER',
+] as const
+
+export type ContactKind = (typeof CONTACT_KINDS)[number]
+
+/** Кантакт, які выканаўца сам паказвае на сваёй старонцы: пошта або спасылка. */
+export interface Contact {
+  id: number
+  kind: ContactKind
+  value: string
+}
+
 export interface Artist {
   id: number
   name: string
   aliases: string[]
   albums: AlbumSummary[]
   otherTracks: TrackHit[]
+  contacts: Contact[]
+  /** Выява, якую выканаўца загрузіў сам; null — на плітцы вокладка апошняга альбома. */
+  imageUrl: string | null
 }
 
 export interface Link {
