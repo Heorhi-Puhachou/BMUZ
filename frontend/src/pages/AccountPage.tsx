@@ -2,9 +2,12 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { reason, send, useAuth } from '../auth'
+import { SPELLINGS } from '../i18n'
+import { useChooseSpelling } from '../spelling'
 import { useTitle } from '../useTitle'
 
-// Свой уліковы запіс: зьмена адраса пошты. Адрас мяняецца толькі пасьля спасылкі з ліста на новы адрас.
+// Свой уліковы запіс: профіль (імя і правапіс) і зьмена адраса пошты. Адрас мяняецца толькі пасьля спасылкі з ліста
+// на новы адрас.
 export default function AccountPage() {
   const { t } = useTranslation()
   const { me } = useAuth()
@@ -16,7 +19,70 @@ export default function AccountPage() {
       </p>
     )
   }
-  return <EmailForm />
+  return (
+    <>
+      <h1>{t('account.heading')}</h1>
+      <Profile />
+      <EmailForm />
+    </>
+  )
+}
+
+function Profile() {
+  const { t, i18n } = useTranslation()
+  const { me, setMe } = useAuth()
+  const chooseSpelling = useChooseSpelling()
+  const [name, setName] = useState(me?.displayName ?? '')
+  const [message, setMessage] = useState<string | null>(null)
+
+  async function rename(event: FormEvent) {
+    event.preventDefault()
+    const response = await send('PUT', '/api/account/display-name', JSON.stringify({ displayName: name }), true)
+    if (response.ok) {
+      const saved = name.trim() || null
+      setName(saved ?? '')
+      if (me) {
+        setMe({ ...me, displayName: saved })
+      }
+      setMessage(t('account.nameSaved'))
+    } else if (response.status === 409) {
+      setMessage(t('account.nameTaken'))
+    } else {
+      setMessage(t('admin.failed', { reason: await reason(response) }))
+    }
+  }
+
+  return (
+    <>
+      <form className="admin-form" onSubmit={rename}>
+        <h2>{t('account.profile')}</h2>
+        <label>
+          {t('account.displayName')}
+          <input maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
+        </label>
+        <p className="muted small">{t('account.displayNameHint')}</p>
+        <button type="submit">{t('account.nameSave')}</button>
+      </form>
+      {message && <p role="status">{message}</p>}
+      <div className="admin-form">
+        <fieldset>
+          <legend>{t('account.spelling')}</legend>
+          {SPELLINGS.map((s) => (
+            <label key={s.tag} lang={s.tag}>
+              <input
+                type="radio"
+                name="spelling"
+                checked={i18n.language === s.tag}
+                onChange={() => chooseSpelling(s.tag)}
+              />
+              {s.name}
+            </label>
+          ))}
+        </fieldset>
+        <p className="muted small">{t('account.spellingHint')}</p>
+      </div>
+    </>
+  )
 }
 
 function EmailForm() {
@@ -52,7 +118,6 @@ function EmailForm() {
 
   return (
     <>
-      <h1>{t('account.heading')}</h1>
       {current && <p>{t('account.currentEmail', { email: current.email })}</p>}
       {current?.pending && <p className="muted">{t('account.pendingEmail', { email: current.pending })}</p>}
       <form className="admin-form" onSubmit={change}>

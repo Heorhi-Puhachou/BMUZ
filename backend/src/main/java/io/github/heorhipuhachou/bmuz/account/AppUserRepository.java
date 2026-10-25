@@ -15,4 +15,6 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
     Optional<AppUser> findByEmailChangeTokenHash(String emailChangeTokenHash);
 
     Optional<AppUser> findByRole(Role role);
+
+    Optional<AppUser> findByDisplayNameIgnoreCase(String displayName);
 }

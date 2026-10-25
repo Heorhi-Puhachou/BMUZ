@@ -4,12 +4,14 @@ import { Link, Outlet, useNavigate, useSearchParams } from 'react-router'
 import { isAdmin, send, useAuth } from './auth'
 import { SPELLINGS } from './i18n'
 import { useListFilter } from './listFilter'
+import { useChooseSpelling } from './spelling'
 
 export default function Layout() {
   const { t, i18n } = useTranslation()
   const filter = useListFilter()
   const { me, setMe, registration } = useAuth()
   const navigate = useNavigate()
+  const chooseSpelling = useChooseSpelling()
 
   async function logout() {
     await send('POST', '/api/auth/logout')
@@ -40,7 +42,7 @@ export default function Layout() {
                   title={s.name}
                   aria-label={s.name}
                   aria-pressed={i18n.language === s.tag}
-                  onClick={() => i18n.changeLanguage(s.tag)}
+                  onClick={() => chooseSpelling(s.tag)}
                 >
                   {s.label}
                 </button>

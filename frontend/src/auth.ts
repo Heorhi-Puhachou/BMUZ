@@ -5,6 +5,9 @@ export interface Me {
   role: 'SUPER_ADMIN' | 'ADMIN' | 'ARTIST' | 'USER'
   /** Выканаўцы, якіх гэты запіс рэдагуе. Адміністратар рэдагуе ўсіх. */
   artists: number[]
+  /** З профілю; null, пакуль не зададзеныя. */
+  displayName: string | null
+  spelling: string | null
 }
 
 /** Адміністратар або суперадміністратар: рэдагуе ўвесь каталёг. */

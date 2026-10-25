@@ -33,8 +33,11 @@ class AuthController {
     record LoginRequest(@NotBlank String email, @NotBlank String password) {
     }
 
-    /** artists — выканаўцы, якіх гэты запіс праўляе; адміністратар праўляе ўсіх і без гэтага сьпісу. */
-    record Me(String email, String role, List<Long> artists) {
+    /**
+     * artists — выканаўцы, якіх гэты запіс праўляе; адміністратар праўляе ўсіх і без гэтага сьпісу. displayName і
+     * spelling — з профілю, null, пакуль не зададзеныя.
+     */
+    record Me(String email, String role, List<Long> artists, String displayName, String spelling) {
     }
 
     record Config(boolean registration) {
@@ -63,10 +66,11 @@ class AuthController {
     private final PasswordResetService passwordReset;
     private final TeamService team;
     private final EmailChangeService emailChange;
+    private final AppUserRepository users;
 
     AuthController(AuthenticationManager authentication, SecurityContextRepository contexts, LoginLimiter limiter,
                    RegistrationService registration, PasswordResetService passwordReset,
-                   TeamService team, EmailChangeService emailChange) {
+                   TeamService team, EmailChangeService emailChange, AppUserRepository users) {
         this.authentication = authentication;
         this.contexts = contexts;
         this.limiter = limiter;
@@ -74,6 +78,7 @@ class AuthController {
         this.passwordReset = passwordReset;
         this.team = team;
         this.emailChange = emailChange;
+        this.users = users;
     }
 
     @GetMapping("/config")
@@ -180,6 +185,8 @@ class AuthController {
                 .map(GrantedAuthority::getAuthority)
                 .map(a -> a.replaceFirst("^ROLE_", ""))
                 .findFirst().orElse(Role.USER.name());
-        return new Me(auth.getName(), role, team.managedArtists(auth.getName()).stream().sorted().toList());
+        AppUser user = users.findByEmail(AppUser.normalise(auth.getName())).orElse(null);
+        return new Me(auth.getName(), role, team.managedArtists(auth.getName()).stream().sorted().toList(),
+                user == null ? null : user.getDisplayName(), user == null ? null : user.getSpelling());
     }
 }

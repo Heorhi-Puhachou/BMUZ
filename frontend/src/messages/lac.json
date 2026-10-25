@@ -116,7 +116,15 @@
     "wrongPassword": "Niapravilny parol.",
     "emailChanged": "Adras źmienieny. Uvajdzicie z novym adrasam.",
     "emailTaken": "Hety adras tym časam zaniaŭ inšy ŭlikovy zapis, tamu adras nie źmienieny.",
-    "emailFailed": "Spasyłka nie pracuje: jana ŭžo vykarystanaja abo sastareła. Paprasicie novuju na staroncy ŭlikovaha zapisu."
+    "emailFailed": "Spasyłka nie pracuje: jana ŭžo vykarystanaja abo sastareła. Paprasicie novuju na staroncy ŭlikovaha zapisu.",
+    "profile": "Profil",
+    "displayName": "Imia na sajcie",
+    "displayNameHint": "Jaho buduć bačyć usie pad vašymi kamentarami. Da 40 znakaŭ; dva ŭlikovyja zapisy nia mohuć mieć adnolkavaje imia. Pustoje pole zdymaje imia.",
+    "nameSave": "Zachavać imia",
+    "nameSaved": "Zachavana.",
+    "nameTaken": "Hetaje imia ŭžo jość u inšaha ŭlikovaha zapisu.",
+    "spelling": "Pravapis",
+    "spellingHint": "Uklučajecca, kali vy ŭvachodzicie, na luboj pryładzie. Pieraklučalnik uviersie staronki mianiaje toj samy vybar."
   },
   "edit": {
     "artistHeading": "Redahavańnie vykanaŭcy",

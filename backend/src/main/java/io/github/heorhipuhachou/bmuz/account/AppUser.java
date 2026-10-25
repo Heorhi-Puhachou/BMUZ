@@ -40,6 +40,10 @@ public class AppUser {
 
     private Instant emailChangeExpiresAt;
 
+    private String displayName;
+
+    private String spelling;
+
     protected AppUser() {
     }
 
@@ -170,6 +174,23 @@ public class AppUser {
 
     public void changePassword(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    /** Правілы імя правярае {@link ProfileService}; null — імя няма. */
+    void rename(String displayName) {
+        this.displayName = displayName;
+    }
+
+    void chooseSpelling(String spelling) {
+        this.spelling = spelling;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public String getSpelling() {
+        return spelling;
     }
 
     public Long getId() {

@@ -1,12 +1,15 @@
 package io.github.heorhipuhachou.bmuz.account;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Свой уліковы запіс таго, хто ўвайшоў. */
@@ -22,10 +25,31 @@ class AccountController {
     record EmailState(String email, String pending) {
     }
 
-    private final EmailChangeService emailChange;
+    record DisplayNameRequest(String displayName) {
+    }
 
-    AccountController(EmailChangeService emailChange) {
+    record SpellingRequest(String spelling) {
+    }
+
+    private final EmailChangeService emailChange;
+    private final ProfileService profile;
+
+    AccountController(EmailChangeService emailChange, ProfileService profile) {
         this.emailChange = emailChange;
+        this.profile = profile;
+    }
+
+    /** Імя і правапіс вяртае /api/auth/me. */
+    @PutMapping("/display-name")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void rename(@RequestBody DisplayNameRequest body, Authentication auth) {
+        profile.rename(auth.getName(), body.displayName());
+    }
+
+    @PutMapping("/spelling")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void chooseSpelling(@RequestBody SpellingRequest body, Authentication auth) {
+        profile.chooseSpelling(auth.getName(), body.spelling());
     }
 
     @GetMapping("/email")
