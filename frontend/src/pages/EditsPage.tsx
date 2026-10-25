@@ -42,7 +42,7 @@ function Edits() {
       <ul className="plain">
         {loaded.data.map((e) => (
           <li key={e.id} className="edit">
-            <span className="muted">{e.createdAt.slice(0, 16).replace('T', ' ')}</span> · {e.email} ·{' '}
+            <span className="muted">{e.createdAt.slice(0, 16).replace('T', ' ')}</span> · {e.email || t('edits.deletedAccount')} ·{' '}
             {t(`edits.action.${e.action}`)} ·{' '}
             {e.albumId != null ? (
               <Link to={`/albums/${e.albumId}`}>{e.subject}</Link>

@@ -1,9 +1,12 @@
 package io.github.heorhipuhachou.bmuz.account;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -31,12 +34,29 @@ class AccountController {
     record SpellingRequest(String spelling) {
     }
 
+    record DeleteRequest(String password) {
+    }
+
     private final EmailChangeService emailChange;
     private final ProfileService profile;
+    private final AccountDeletionService deletion;
 
-    AccountController(EmailChangeService emailChange, ProfileService profile) {
+    AccountController(EmailChangeService emailChange, ProfileService profile, AccountDeletionService deletion) {
         this.emailChange = emailChange;
         this.profile = profile;
+        this.deletion = deletion;
+    }
+
+    /** POST, а не DELETE: у запыце ёсьць пароль, а цела DELETE-запыту не ўсе праксі перадаюць. */
+    @PostMapping("/delete")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void delete(@RequestBody DeleteRequest body, Authentication auth, HttpServletRequest request) {
+        deletion.delete(auth.getName(), body.password());
+        SecurityContextHolder.clearContext();
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
     }
 
     /** Імя і правапіс вяртае /api/auth/me. */

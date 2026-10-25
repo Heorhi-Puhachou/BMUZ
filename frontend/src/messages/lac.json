@@ -124,7 +124,12 @@
     "nameSaved": "Zachavana.",
     "nameTaken": "Hetaje imia ŭžo jość u inšaha ŭlikovaha zapisu.",
     "spelling": "Pravapis",
-    "spellingHint": "Uklučajecca, kali vy ŭvachodzicie, na luboj pryładzie. Pieraklučalnik uviersie staronki mianiaje toj samy vybar."
+    "spellingHint": "Uklučajecca, kali vy ŭvachodzicie, na luboj pryładzie. Pieraklučalnik uviersie staronki mianiaje toj samy vybar.",
+    "deleteHeading": "Vydalić ulikovy zapis",
+    "deleteHint": "Adras pošty, parol, imia i pravapis vydalajucca nazaŭždy, a vy vychodzicie na ŭsich pryładach. Źmieny, jakija vy ŭnieśli ŭ kataloh, zastajucca, ale biez vašaha adrasa. Vokładki, jakija vy zahruzili, zastajucca razam z zapisam pra dazvoł na ich.",
+    "deleteUnderstood": "Ja razumieju, što viarnuć zapis nielha",
+    "deleteSend": "Vydalić nazaŭždy",
+    "deleted": "Ulikovy zapis vydaleny. Na vaš adras pajšoŭ apošni list pra heta."
   },
   "edit": {
     "artistHeading": "Redahavańnie vykanaŭcy",
@@ -195,6 +200,7 @@
     "heading": "Źmieny",
     "none": "Źmienaŭ pakul niama.",
     "details": "Było i stała",
+    "deletedAccount": "vydaleny ŭlikovy zapis",
     "before": "Było",
     "after": "Stała",
     "action": {

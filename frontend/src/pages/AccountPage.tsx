@@ -6,12 +6,16 @@ import { SPELLINGS } from '../i18n'
 import { useChooseSpelling } from '../spelling'
 import { useTitle } from '../useTitle'
 
-// Свой уліковы запіс: профіль (імя і правапіс) і зьмена адраса пошты. Адрас мяняецца толькі пасьля спасылкі з ліста
-// на новы адрас.
+// Свой уліковы запіс: профіль (імя і правапіс), зьмена адраса пошты і выдаленьне запісу. Адрас мяняецца толькі
+// пасьля спасылкі з ліста на новы адрас.
 export default function AccountPage() {
   const { t } = useTranslation()
   const { me } = useAuth()
+  const [deleted, setDeleted] = useState(false)
   useTitle(t('account.heading'))
+  if (deleted) {
+    return <p role="status">{t('account.deleted')}</p>
+  }
   if (!me) {
     return (
       <p>
@@ -24,6 +28,7 @@ export default function AccountPage() {
       <h1>{t('account.heading')}</h1>
       <Profile />
       <EmailForm />
+      {me.role !== 'SUPER_ADMIN' && <DeleteForm onDeleted={() => setDeleted(true)} />}
     </>
   )
 }
@@ -138,6 +143,57 @@ function EmailForm() {
           />
         </label>
         <button type="submit">{t('account.changeEmailSend')}</button>
+      </form>
+      {message && <p role="status">{message}</p>}
+    </>
+  )
+}
+
+// Выдаленьне назаўжды: з паролем і адзнакай, што карыстальнік разумее, што вярнуць нельга.
+function DeleteForm({ onDeleted }: { onDeleted: () => void }) {
+  const { t } = useTranslation()
+  const { setMe } = useAuth()
+  const [password, setPassword] = useState('')
+  const [understood, setUnderstood] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+
+  async function remove(event: FormEvent) {
+    event.preventDefault()
+    const response = await send('POST', '/api/account/delete', JSON.stringify({ password }), true)
+    if (response.ok) {
+      onDeleted()
+      setMe(null)
+    } else if (response.status === 403) {
+      setMessage(t('account.wrongPassword'))
+    } else if (response.status === 429) {
+      setMessage(t('account.locked'))
+    } else {
+      setMessage(t('admin.failed', { reason: await reason(response) }))
+    }
+  }
+
+  return (
+    <>
+      <form className="admin-form" onSubmit={remove}>
+        <h2>{t('account.deleteHeading')}</h2>
+        <p className="muted small">{t('account.deleteHint')}</p>
+        <label>
+          {t('account.password')}
+          <input
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </label>
+        <fieldset>
+          <label>
+            <input type="checkbox" required checked={understood} onChange={(e) => setUnderstood(e.target.checked)} />
+            {t('account.deleteUnderstood')}
+          </label>
+        </fieldset>
+        <button type="submit">{t('account.deleteSend')}</button>
       </form>
       {message && <p role="status">{message}</p>}
     </>
