@@ -25,13 +25,9 @@ export function canEdit(me: Me | null, artistIds: number[]) {
 export interface Auth {
   me: Me | null
   setMe: (me: Me | null) => void
-  /** Ці адкрытая публічная рэгістрацыя на гэтым сэрвэры. */
-  registration: boolean
-  /** Ці ёсьць на гэтым сэрвэры водгукі і ацэнкі. */
-  reviews: boolean
 }
 
-export const AuthContext = createContext<Auth>({ me: null, setMe: () => {}, registration: false, reviews: false })
+export const AuthContext = createContext<Auth>({ me: null, setMe: () => {} })
 
 export function useAuth() {
   return useContext(AuthContext)

@@ -1,13 +1,11 @@
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../auth'
 import { useTitle } from '../useTitle'
 import { MARK, withLink } from '../withLink'
 import { EMAIL } from './AboutPage'
 
-// Апавяшчэньне паводле арт. 13 GDPR. Пра водгукі — толькі калі яны ўключаныя на сайце.
+// Апавяшчэньне паводле арт. 13 GDPR.
 export default function PrivacyPage() {
   const { t } = useTranslation()
-  const { reviews } = useAuth()
   useTitle(t('privacy.heading'))
   const email = <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
 
@@ -23,7 +21,7 @@ export default function PrivacyPage() {
       <h2>{t('privacy.accountHeading')}</h2>
       <p>{t('privacy.account1')}</p>
       <p>{t('privacy.account2')}</p>
-      {reviews && <p>{t('privacy.reviews')}</p>}
+      <p>{t('privacy.reviews')}</p>
 
       <h2>{t('privacy.editorsHeading')}</h2>
       <p>{t('privacy.editors')}</p>

@@ -21,7 +21,7 @@ const HOUR = 60 * 60 * 1000
 // Водгукі пад альбомам. Ацэнка ад 1 да 10 толькі разам з тэкстам, і пад кожным водгукам — імя аўтара.
 export default function AlbumReviews({ album }: { album: Album }) {
   const { t, i18n } = useTranslation()
-  const { me, registration } = useAuth()
+  const { me } = useAuth()
   const [version, setVersion] = useState(0)
   const [now] = useState(() => Date.now())
   const loaded = useApi<{ rating: Rating | null; reviews: Review[] }>(`/api/albums/${album.id}/reviews`, version)
@@ -59,12 +59,8 @@ export default function AlbumReviews({ album }: { album: Album }) {
       {!me ? (
         <p className="banner">
           {t('reviews.visitorBanner')}{' '}
-          {registration && (
-            <>
-              <Link to="/register">{t('account.register')}</Link>
-              {' · '}
-            </>
-          )}
+          <Link to="/register">{t('account.register')}</Link>
+          {' · '}
           <Link to={`/login?next=/albums/${album.id}`}>{t('reviews.loginToReview')}</Link>
         </p>
       ) : own ? (

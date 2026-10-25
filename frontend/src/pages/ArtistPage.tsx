@@ -24,7 +24,7 @@ export default function ArtistPage() {
   const { t } = useTranslation()
   const { id } = useParams()
   const filter = useListFilter()
-  const { me, reviews } = useAuth()
+  const { me } = useAuth()
   const [reload, setReload] = useState(0)
   const loaded = useApi<Artist>(withFilter(`/api/artists/${id}`, filter), reload)
   const unchecked = useUnchecked()
@@ -60,7 +60,7 @@ export default function ArtistPage() {
                     title={album.title}
                     mark={unchecked.has(album.id) ? t('checks.albumMark') : undefined}
                   />
-                  {reviews && <RatingSquares rating={album.rating} />}
+                  <RatingSquares rating={album.rating} />
                   <span className="tile-name">{album.title}</span>
                 </Link>
                 {others(album) && (

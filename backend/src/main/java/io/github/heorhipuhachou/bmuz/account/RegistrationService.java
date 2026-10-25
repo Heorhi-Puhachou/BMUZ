@@ -33,30 +33,22 @@ public class RegistrationService {
     private final PasswordEncoder encoder;
     private final Mailer mailer;
     private final RegistrationAlarm alarm;
-    private final boolean enabled;
     private final String siteUrl;
     private final Clock clock;
     private final SecureRandom random = new SecureRandom();
 
     RegistrationService(AppUserRepository users, PasswordEncoder encoder, Mailer mailer, RegistrationAlarm alarm,
-                        @Value("${bmuz.registration.enabled:false}") boolean enabled,
                         @Value("${bmuz.site-url:http://localhost:5173}") String siteUrl) {
         this.users = users;
         this.encoder = encoder;
         this.mailer = mailer;
         this.alarm = alarm;
-        this.enabled = enabled;
         this.siteUrl = siteUrl.replaceAll("/+$", "");
         this.clock = Clock.systemUTC();
     }
 
-    public boolean isEnabled() {
-        return enabled;
-    }
-
     @Transactional
     public void register(String email, String password) {
-        requireEnabled();
         String normalised = AppUser.normalise(email);
         if (!normalised.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "not an email address");
@@ -88,18 +80,11 @@ public class RegistrationService {
 
     @Transactional
     public boolean confirm(String token) {
-        requireEnabled();
         if (token == null || token.isBlank()) {
             return false;
         }
         Instant now = clock.instant();
         return users.findByConfirmTokenHash(hash(token)).map(u -> u.confirm(now)).orElse(false);
-    }
-
-    private void requireEnabled() {
-        if (!enabled) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
     }
 
     private String newToken() {

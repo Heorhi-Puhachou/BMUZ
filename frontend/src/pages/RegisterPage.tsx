@@ -1,15 +1,13 @@
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { reason, send, useAuth } from '../auth'
-import NotFound from './NotFound'
+import { reason, send } from '../auth'
 import { useTitle } from '../useTitle'
 
 const MIN_PASSWORD_LENGTH = 12
 
 export default function RegisterPage() {
   const { t } = useTranslation()
-  const { registration } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [again, setAgain] = useState('')
@@ -17,10 +15,6 @@ export default function RegisterPage() {
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   useTitle(t('account.registerHeading'))
-
-  if (!registration) {
-    return <NotFound />
-  }
 
   async function register(event: FormEvent) {
     event.preventDefault()

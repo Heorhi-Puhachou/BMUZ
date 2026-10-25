@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Import(TestcontainersConfiguration.class)
-@SpringBootTest(properties = {"bmuz.reviews.enabled=true", "bmuz.covers.local-dir=target/test-covers"})
+@SpringBootTest(properties = "bmuz.covers.local-dir=target/test-covers")
 @AutoConfigureMockMvc
 class ReviewTest {
 
@@ -115,7 +115,6 @@ class ReviewTest {
         mvc.perform(get("/api/albums/" + album + "/reviews")).andExpect(jsonPath("$.reviews[1].mine").value(false));
         mvc.perform(get("/api/artists")).andExpect(jsonPath("$.items[0].rating.average").value(8.5));
         mvc.perform(get("/api/artists/" + artist)).andExpect(jsonPath("$.albums[0].rating.count").value(2));
-        mvc.perform(get("/api/auth/config")).andExpect(jsonPath("$.reviews").value(true));
     }
 
     @Test

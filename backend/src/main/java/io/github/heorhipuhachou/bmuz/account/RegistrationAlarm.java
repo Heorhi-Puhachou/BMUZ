@@ -49,7 +49,7 @@ class RegistrationAlarm {
         lastSent = now;
         String text = "За апошнюю гадзіну на " + siteUrl + " зьявілася ўліковых запісаў: " + count
                 + " (мяжа — " + THRESHOLD + "). Магчыма, рэгіструюцца робаты.\n\n"
-                + "Праверце новыя запісы. Каб спыніць рэгістрацыю, выключыце bmuz.registration.enabled.\n\n"
+                + "Праверце новыя запісы.\n\n"
                 + "Наступны такі ліст прыйдзе не раней чым праз гадзіну.";
         for (String admin : jdbc.sql("""
                         SELECT email FROM app_user

@@ -6,7 +6,7 @@ import { useTitle } from '../useTitle'
 
 export default function LoginPage() {
   const { t } = useTranslation()
-  const { me, setMe, registration } = useAuth()
+  const { me, setMe } = useAuth()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   // Куды вярнуцца пасьля ўваходу — толькі адрас на гэтым сайце.
@@ -57,7 +57,7 @@ export default function LoginPage() {
       {error && <p role="alert">{error}</p>}
       <button type="submit">{t('account.login')}</button>
       <Link to="/forgot">{t('account.forgot')}</Link>
-      {registration && <Link to="/register">{t('account.register')}</Link>}
+      <Link to="/register">{t('account.register')}</Link>
     </form>
   )
 }

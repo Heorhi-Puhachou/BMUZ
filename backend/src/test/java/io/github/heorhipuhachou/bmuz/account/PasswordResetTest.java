@@ -20,9 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
-/** Рэгістрацыя тут выключаная, як на сайце: аднаўленьне пароля мусіць працаваць і без яе. */
 @Import({TestcontainersConfiguration.class, RegistrationTest.Mails.class})
-@SpringBootTest(properties = {"bmuz.registration.enabled=false", "bmuz.site-url=https://bmuz.example"})
+@SpringBootTest(properties = "bmuz.site-url=https://bmuz.example")
 @AutoConfigureMockMvc
 class PasswordResetTest {
 

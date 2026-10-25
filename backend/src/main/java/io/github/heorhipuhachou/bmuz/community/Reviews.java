@@ -4,7 +4,6 @@ import io.github.heorhipuhachou.bmuz.account.AppUser;
 import io.github.heorhipuhachou.bmuz.account.AppUserRepository;
 import io.github.heorhipuhachou.bmuz.account.TeamService;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.Rating;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
@@ -17,8 +16,7 @@ import java.util.Set;
 
 /**
  * Водгукі на альбомы: ацэнка ад 1 да 10 і тэкст. Ацэнкі без тэксту няма, і пад кожным водгукам стаіць імя аўтара, таму
- * без імя ў профілі водгук не пішацца. Выканаўца не ацэньвае альбомы сваіх выканаўцаў. Пакуль bmuz.reviews.enabled
- * выключаны, водгукаў на сайце няма зусім: каментары не зьяўляюцца без тэксту прыватнасьці і шляху для скаргаў.
+ * без імя ў профілі водгук не пішацца. Выканаўца не ацэньвае альбомы сваіх выканаўцаў.
  */
 @Service
 public class Reviews {
@@ -43,24 +41,16 @@ public class Reviews {
     private final AppUserRepository users;
     private final TeamService team;
     private final JdbcClient jdbc;
-    private final boolean enabled;
 
-    Reviews(AppUserRepository users, TeamService team, JdbcClient jdbc,
-            @Value("${bmuz.reviews.enabled:false}") boolean enabled) {
+    Reviews(AppUserRepository users, TeamService team, JdbcClient jdbc) {
         this.users = users;
         this.team = team;
         this.jdbc = jdbc;
-        this.enabled = enabled;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
     }
 
     /** email — null для наведніка. Найноўшыя першымі. */
     @Transactional(readOnly = true)
     public AlbumReviews of(long albumId, String email) {
-        requireEnabled();
         requireAlbum(albumId);
         Long me = email == null ? null : users.findByEmail(AppUser.normalise(email)).map(AppUser::getId).orElse(null);
         List<ReviewView> reviews = jdbc.sql("""
@@ -80,7 +70,6 @@ public class Reviews {
     /** Новы водгук або зьмена свайго. */
     @Transactional
     public void save(long albumId, ReviewInput input, String email) {
-        requireEnabled();
         requireAlbum(albumId);
         AppUser user = user(email);
         if (user.getDisplayName() == null) {
@@ -128,7 +117,6 @@ public class Reviews {
 
     @Transactional
     public void deleteOwn(long albumId, String email) {
-        requireEnabled();
         jdbc.sql("DELETE FROM review WHERE album_id = ? AND user_id = ?").params(albumId, user(email).getId())
                 .update();
     }
@@ -136,7 +124,6 @@ public class Reviews {
     /** Адміністратар здымае чужы водгук. */
     @Transactional
     public void remove(long reviewId) {
-        requireEnabled();
         if (jdbc.sql("DELETE FROM review WHERE id = ?").param(reviewId).update() == 0) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "review not found");
         }
@@ -145,12 +132,6 @@ public class Reviews {
     private AppUser user(String email) {
         return users.findByEmail(AppUser.normalise(email))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-    }
-
-    private void requireEnabled() {
-        if (!enabled) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
     }
 
     private void requireAlbum(long albumId) {

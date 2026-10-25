@@ -3,7 +3,6 @@ package io.github.heorhipuhachou.bmuz.account;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,10 +42,6 @@ class AuthController {
               Instant reviewsFrom) {
     }
 
-    /** reviews — ці ёсьць на сайце водгукі і ацэнкі (bmuz.reviews.enabled). */
-    record Config(boolean registration, boolean reviews) {
-    }
-
     record RegisterRequest(String email, String password) {
     }
 
@@ -71,12 +66,10 @@ class AuthController {
     private final TeamService team;
     private final EmailChangeService emailChange;
     private final AppUserRepository users;
-    private final boolean reviews;
 
     AuthController(AuthenticationManager authentication, SecurityContextRepository contexts, LoginLimiter limiter,
                    RegistrationService registration, PasswordResetService passwordReset,
-                   TeamService team, EmailChangeService emailChange, AppUserRepository users,
-                   @Value("${bmuz.reviews.enabled:false}") boolean reviews) {
+                   TeamService team, EmailChangeService emailChange, AppUserRepository users) {
         this.authentication = authentication;
         this.contexts = contexts;
         this.limiter = limiter;
@@ -85,12 +78,6 @@ class AuthController {
         this.team = team;
         this.emailChange = emailChange;
         this.users = users;
-        this.reviews = reviews;
-    }
-
-    @GetMapping("/config")
-    Config config() {
-        return new Config(registration.isEnabled(), reviews);
     }
 
     /** Адказ заўсёды 202, нават калі адрас ужо ёсьць: форма не павінна выдаваць, хто зарэгістраваны. */

@@ -24,7 +24,7 @@ function formatLength(seconds: number | null) {
 export default function AlbumPage() {
   const { t } = useTranslation()
   const { id } = useParams()
-  const { me, reviews } = useAuth()
+  const { me } = useAuth()
   const [reload, setReload] = useState(0)
   const loaded = useApi<Album>(`/api/albums/${id}`, reload)
   useTitle(loaded.state === 'ok' ? `${loaded.data.title} — ${creditText(loaded.data.credit)}` : undefined)
@@ -93,7 +93,7 @@ export default function AlbumPage() {
         </ol>
       )}
 
-      {reviews && <AlbumReviews album={album} />}
+      <AlbumReviews album={album} />
     </>
   )
 }

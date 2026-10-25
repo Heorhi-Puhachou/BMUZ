@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Import({TestcontainersConfiguration.class, RegistrationTest.Mails.class})
-@SpringBootTest(properties = {"bmuz.registration.enabled=true", "bmuz.site-url=https://bmuz.example"})
+@SpringBootTest(properties = "bmuz.site-url=https://bmuz.example")
 @AutoConfigureMockMvc
 class RegistrationTest {
 
@@ -92,7 +92,6 @@ class RegistrationTest {
 
     @Test
     void registersConfirmsAndLogsIn() throws Exception {
-        mvc.perform(get("/api/auth/config")).andExpect(jsonPath("$.registration").value(true));
         assertThat(register(EMAIL, PASSWORD)).isEqualTo(202);
         assertThat(mailer.sent).hasSize(1);
         assertThat(mailer.sent.getFirst()[0]).isEqualTo("listener@example.org");

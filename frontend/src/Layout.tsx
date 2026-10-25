@@ -9,7 +9,7 @@ import { useChooseSpelling } from './spelling'
 export default function Layout() {
   const { t, i18n } = useTranslation()
   const filter = useListFilter()
-  const { me, setMe, registration } = useAuth()
+  const { me, setMe } = useAuth()
   const navigate = useNavigate()
   const chooseSpelling = useChooseSpelling()
 
@@ -73,12 +73,8 @@ export default function Layout() {
               ) : (
                 <span className="account">
                   <Link to="/login">{t('account.login')}</Link>
-                  {registration && (
-                    <>
-                      {' · '}
-                      <Link to="/register">{t('account.register')}</Link>
-                    </>
-                  )}
+                  {' · '}
+                  <Link to="/register">{t('account.register')}</Link>
                 </span>
               )}
             </div>

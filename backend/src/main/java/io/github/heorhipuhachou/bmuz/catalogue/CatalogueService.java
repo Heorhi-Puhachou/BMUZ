@@ -15,7 +15,6 @@ import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.TrackHit;
 import io.github.heorhipuhachou.bmuz.catalogue.CatalogueViews.TrackView;
 import io.github.heorhipuhachou.bmuz.cover.CoverService;
 import io.github.heorhipuhachou.bmuz.cover.CoverService.CoverUrls;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -47,17 +46,14 @@ public class CatalogueService {
     private final TrackRepository tracks;
     private final CoverService covers;
     private final JdbcClient jdbc;
-    private final boolean reviews;
 
     public CatalogueService(ArtistRepository artists, AlbumRepository albums, TrackRepository tracks,
-                            CoverService covers, JdbcClient jdbc,
-                            @Value("${bmuz.reviews.enabled:false}") boolean reviews) {
+                            CoverService covers, JdbcClient jdbc) {
         this.artists = artists;
         this.albums = albums;
         this.tracks = tracks;
         this.covers = covers;
         this.jdbc = jdbc;
-        this.reviews = reviews;
     }
 
     public PageView<ArtistTile> listArtists(int page, int size, ListFilter filter) {
@@ -201,9 +197,9 @@ public class CatalogueService {
                 + "GROUP BY album_id", albumIds);
     }
 
-    /** Запыт вяртае нумар, сярэднюю і колькасьць. Пакуль водгукі выключаныя, ацэнак няма зусім. */
+    /** Запыт вяртае нумар, сярэднюю і колькасьць. */
     private Map<Long, Rating> ratings(String sql, Collection<Long> ids) {
-        if (!reviews || ids.isEmpty()) {
+        if (ids.isEmpty()) {
             return Map.of();
         }
         Map<Long, Rating> ratings = new HashMap<>();
